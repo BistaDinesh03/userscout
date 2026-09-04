@@ -60,7 +60,7 @@ export default function Dashboard() {
             const funnel = computeFunnel(pros);
             const top = pros[0];
             return (
-              <article key={p.id} className="reveal group flex flex-col rounded-lg border border-pine-700/80 bg-pine-900/70 transition-all hover:border-pine-600 hover:shadow-panel" style={{ animationDelay: `${i * 60}ms` }}>
+              <article key={p.id} className="reveal group flex flex-col rounded-lg border border-pine-700/80 bg-pine-900/70 transition-all hover:border-pine-600 hover:shadow-soft" style={{ animationDelay: `${i * 60}ms` }}>
                 <div className="flex items-start justify-between gap-3 border-b border-pine-700/60 p-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -86,13 +86,13 @@ export default function Dashboard() {
                   {p.profile.topics.slice(0, 3).map((t) => <Chip key={t}>{t}</Chip>)}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between gap-3 border-t border-pine-700/60 px-4 py-3">
-                  <div className="flex items-center gap-3 text-[12px] text-fog-400">
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-pine-700/60 px-4 py-3">
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-fog-400">
                     <span className="flex items-center gap-1.5 font-medium text-fog-200"><IUsers size={13} /> {pros.filter((x) => !x.archived).length} prospects</span>
                     <span className="flex items-center gap-1.5 text-leaf-300"><IBranch size={13} /> {funnel.stages[5].count} users</span>
                     <span className="font-mono text-[10.5px] text-fog-500">{p.lastDiscoveryAt ? `scouted ${timeAgo(p.lastDiscoveryAt)}` : "not scouted yet"}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex w-full gap-2 sm:w-auto">
                     <Button size="sm" variant="outline" onClick={() => nav(`/app/projects/${p.id}/discovery`)}>
                       <IRadar size={13} /> Scout
                     </Button>

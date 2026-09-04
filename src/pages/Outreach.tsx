@@ -30,8 +30,8 @@ export default function Outreach() {
       <PageHead title="Outreach workspace" sub="Your pipeline, tracked by hand — because every message is personal or it's spam." />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div>
-          <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by status">
+        <div className="min-w-0">
+          <div className="mb-4 flex max-w-full flex-nowrap gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Filter by status">
             <FilterBtn active={filter === "active"} onClick={() => setFilter("active")} label={`Active · ${prospects.filter((p) => !p.archived && p.status !== "not_interested").length}`} />
             {STATUSES.map((s) => {
               const n = prospects.filter((p) => p.status === s.id).length;
@@ -75,7 +75,7 @@ export default function Outreach() {
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <section className="brackets rounded-lg border border-pine-600 bg-pine-900/80 p-5">
             <h2 className="mb-3 font-display text-[14px] font-bold">Live funnel</h2>
             {prospects.length === 0 ? (

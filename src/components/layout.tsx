@@ -26,8 +26,6 @@ export function Backdrop() {
     <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
       <div className="backdrop-topo absolute inset-0 opacity-60" />
       <div className="backdrop-grid absolute inset-0" />
-      <div className="absolute -top-40 left-1/2 h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-signal-500/[0.05] blur-3xl" />
-      <div className="absolute bottom-[-200px] right-[-120px] h-[420px] w-[420px] rounded-full bg-leaf-500/[0.05] blur-3xl" />
     </div>
   );
 }
@@ -46,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative z-10 flex min-h-screen">
       {/* sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-[212px] flex-col border-r border-pine-700/70 bg-pine-900/80 backdrop-blur-sm md:flex">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-[196px] flex-col border-r border-pine-700/70 bg-pine-900/90 md:flex">
         <div className="flex h-14 items-center border-b border-pine-700/70 px-4">
           <NavLink to="/app/projects" aria-label="UserScout home">
             <Logo />
@@ -98,7 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* main column */}
-      <div className="flex min-h-screen w-full flex-col md:pl-[212px]">
+      <div className="flex min-h-screen w-full flex-col md:pl-[196px]">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-pine-700/70 bg-pine-950/85 px-4 backdrop-blur-sm md:px-7">
           <div className="flex items-center gap-3 md:hidden">
             <Logo size="sm" />
@@ -139,8 +137,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </nav>
 
-        <main className="mx-auto w-full max-w-[1060px] flex-1 px-4 py-7 md:px-7">{children}</main>
-        <footer className="border-t border-pine-800 px-7 py-4 text-[11px] text-fog-500">
+        <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <footer className="border-t border-pine-800 px-4 py-4 text-[11px] text-fog-500 md:px-8">
           <span className="font-mono">UserScout · MIT · local-first build · your outreach history never leaves this device</span>
         </footer>
       </div>
@@ -198,7 +196,7 @@ export function PageHead({ title, sub, right }: { title: string; sub?: string; r
         <h1 className="font-display text-[26px] font-bold tracking-tight text-fog-100">{title}</h1>
         {sub && <p className="mt-1 text-[13px] text-fog-400">{sub}</p>}
       </div>
-      {right && <div className="flex items-center gap-2">{right}</div>}
+      {right && <div className="flex w-full items-center gap-2 sm:w-auto">{right}</div>}
     </div>
   );
 }

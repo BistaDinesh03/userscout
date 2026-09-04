@@ -36,7 +36,7 @@ export function ScoreDial({ score, size = 76, sub }: { score: number; size?: num
         <text x="38" y="37" textAnchor="middle" fill="#eef3ea" fontSize="19" fontWeight="700" fontFamily="Bricolage Grotesque, sans-serif">
           {score}
         </text>
-        <text x="38" y="50" textAnchor="middle" fill="#7e9482" fontSize="8.5" fontFamily="IBM Plex Mono, monospace">
+        <text x="38" y="50" textAnchor="middle" fill="#7e9482" fontSize="8.5" fontFamily="ui-monospace, monospace">
           /100
         </text>
       </svg>
@@ -49,7 +49,7 @@ export function SignalBreakdown({ signals, compact }: { signals: Signal[]; compa
   return (
     <ul className="space-y-1.5">
       {signals.map((s) => (
-        <li key={s.id} className="rounded-md border border-pine-700/70 bg-pine-900/50 px-3 py-2">
+        <li key={s.id} className="border-b border-pine-700/70 px-1 py-2.5 last:border-b-0">
           <div className="flex items-center justify-between gap-3">
             <span className="text-[12.5px] font-medium text-fog-200">{s.label}</span>
             <span className="font-mono text-[11.5px] font-semibold text-leaf-300">+{s.points}</span>
@@ -80,7 +80,7 @@ export function SignalBreakdown({ signals, compact }: { signals: Signal[]; compa
 export function EvidenceRow({ e }: { e: Evidence }) {
   const kindTone = { issue: "amber", repo: "teal", contribution: "green", profile: "fog" } as const;
   return (
-    <li className="flex items-start gap-2.5 rounded-md border border-pine-700/70 bg-pine-900/50 px-3 py-2.5">
+    <li className="flex items-start gap-2.5 border-b border-pine-700/60 px-1 py-2.5 last:border-b-0">
       <Badge tone={kindTone[e.kind]} className="mt-px shrink-0 uppercase font-mono text-[9px]">{e.kind}</Badge>
       <div className="min-w-0 text-[13px] leading-relaxed text-fog-200">
         {e.text}

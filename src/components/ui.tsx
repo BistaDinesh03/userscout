@@ -20,12 +20,12 @@ export function Button({
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: "sm" | "md"; loading?: boolean }) {
   const base =
-    "inline-flex items-center justify-center gap-2 font-medium rounded-md transition-all duration-150 select-none whitespace-nowrap disabled:opacity-45 disabled:pointer-events-none active:translate-y-px";
-  const sizes = size === "sm" ? "h-8 px-3 text-[13px]" : "h-10 px-4 text-sm";
+    "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-150 select-none whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-45 active:translate-y-px";
+  const sizes = size === "sm" ? "min-h-8 px-3 text-[12.5px]" : "min-h-10 px-4 text-sm";
   const variants: Record<BtnVariant, string> = {
-    primary: "bg-signal-500 text-signal-950 hover:bg-signal-400 shadow-[0_2px_12px_-4px_rgba(242,169,59,.55)]",
-    outline: "border border-pine-600 text-fog-100 hover:border-signal-500/70 hover:text-signal-300 bg-pine-800/40",
-    ghost: "text-fog-300 hover:text-fog-100 hover:bg-pine-700/60",
+    primary: "bg-signal-500 text-signal-950 hover:bg-signal-400 shadow-[0_2px_10px_-5px_rgba(242,169,59,.55)]",
+    outline: "border border-pine-600 text-fog-100 hover:border-signal-500/70 hover:text-signal-300 bg-pine-800/55",
+    ghost: "text-fog-300 hover:bg-pine-800 hover:text-fog-100",
     danger: "bg-ember-500/12 text-ember-400 border border-ember-500/35 hover:bg-ember-500/22",
     subtle: "bg-pine-700 text-fog-100 hover:bg-pine-600",
   };
@@ -51,7 +51,7 @@ export function Spinner({ className }: { className?: string }) {
 export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string | null; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-baseline justify-between text-[13px] font-medium text-fog-300">
+      <span className="mb-1.5 flex items-baseline justify-between text-[12.5px] font-medium text-fog-300">
         {label}
         {hint && <span className="text-[11px] font-normal text-fog-500">{hint}</span>}
       </span>
@@ -62,7 +62,7 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
 }
 
 const fieldCls =
-  "w-full h-10 rounded-md border border-pine-600 bg-pine-900/80 px-3 text-sm text-fog-100 placeholder:text-fog-500 transition-colors focus:border-signal-500 focus:outline-none";
+  "w-full h-10 rounded-md border border-pine-600 bg-pine-950/65 px-3 text-sm text-fog-100 placeholder:text-fog-500 transition-colors focus:border-signal-500 focus:outline-none focus:ring-2 focus:ring-signal-500/15";
 
 export function Input({ className, invalid, ...rest }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return <input className={cx(fieldCls, invalid && "border-ember-500/60", className)} {...rest} />;
@@ -101,13 +101,13 @@ const tones: Record<Tone, string> = {
 
 export function Badge({ tone = "fog", className, children }: { tone?: Tone; className?: string; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[11px] font-medium tracking-wide", tones[tone], className)}>
+    <span className={cx("inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10.5px] font-medium tracking-wide", tones[tone], className)}>
       {children}
     </span>
   );
 }
 
-export const STATUS_TONE: Record<ProspectStatus, Tone> = {
+const STATUS_TONE: Record<ProspectStatus, Tone> = {
   saved: "fog",
   contacted: "teal",
   replied: "amber",
@@ -224,6 +224,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
     <button
       role="switch"
       aria-checked={checked}
+      aria-label={label || "Toggle setting"}
       onClick={() => onChange(!checked)}
       className="group flex items-center gap-2.5 text-[13px] text-fog-300 hover:text-fog-100"
     >
@@ -239,8 +240,8 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
 
 export function EmptyState({ icon, title, body, action }: { icon: ReactNode; title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed border-pine-600 bg-pine-900/40 px-6 py-14 text-center">
-      <div className="mb-4 flex size-12 items-center justify-center rounded-full border border-pine-600 bg-pine-800 text-signal-400">{icon}</div>
+    <div className="flex flex-col items-center rounded-lg border border-pine-700/80 bg-pine-900/45 px-6 py-12 text-center shadow-soft">
+      <div className="mb-4 flex size-11 items-center justify-center rounded-md border border-pine-600 bg-pine-800 text-signal-400">{icon}</div>
       <h3 className="font-display text-[16px] font-semibold text-fog-100">{title}</h3>
       <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-fog-400">{body}</p>
       {action && <div className="mt-5">{action}</div>}

@@ -150,7 +150,7 @@ export default function Discovery() {
         </div>
 
         {/* right: results */}
-        <div>
+        <div className="min-w-0">
           {!results && !running && (
             <EmptyState icon={<ISearch size={20} />} title="No results yet" body="Run the search plan. Candidates appear ranked by a deterministic score, each backed by public evidence you can verify yourself." />
           )}
@@ -169,7 +169,7 @@ export default function Discovery() {
                   <strong className="text-fog-100">{results.length}</strong> candidates ·{" "}
                   <strong className={strongCount ? "text-leaf-300" : "text-fog-100"}>{strongCount}</strong> with strong-signal confidence
                 </p>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-wrap gap-2 sm:w-auto">
                   <Button size="sm" variant="outline" onClick={saveTop}><IUsers size={13} /> Save strong leads (≥45)</Button>
                   <Link to={`/app/projects/${project.id}`}><Button size="sm" variant="ghost">View saved →</Button></Link>
                 </div>
@@ -184,7 +184,7 @@ export default function Discovery() {
                     const open = expanded === r.candidate.login;
                     return (
                       <li key={r.candidate.login} className="reveal rounded-lg border border-pine-700/80 bg-pine-900/70 transition-colors hover:border-pine-600" style={{ animationDelay: `${idx * 50}ms` }}>
-                        <div className="flex flex-wrap items-start gap-4 p-4">
+                          <div className="flex flex-wrap items-start gap-3.5 p-4 sm:gap-4">
                           <ScoreDial score={r.score} size={68} />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +206,7 @@ export default function Discovery() {
                               </button>
                             </div>
                           </div>
-                          <div className="flex shrink-0 flex-col items-end gap-2">
+                          <div className="flex w-full shrink-0 flex-row items-center justify-between gap-2 sm:w-auto sm:flex-col sm:items-end">
                             {saved ? (
                               <Badge tone="green" className="font-mono"><ICheck size={10} /> IN PROSPECTS</Badge>
                             ) : (

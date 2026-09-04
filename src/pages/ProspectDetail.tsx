@@ -99,11 +99,11 @@ export default function ProspectDetail() {
             </div>
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-5">
+        <div className="flex w-full items-center justify-between gap-4 sm:ml-auto sm:w-auto sm:justify-start sm:gap-5">
           <ScoreDial score={prospect.score} size={72} sub={prospect.confidence} />
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex min-w-0 flex-1 flex-col items-end gap-2 sm:flex-none">
             <StatusPill status={prospect.status} />
-            <Select value={prospect.status} onChange={(e) => { setStatus(prospect.id, e.target.value as ProspectStatus); toast("ok", `Status → ${statusLabel(e.target.value as ProspectStatus)}`); }} aria-label="Change prospect status" className="h-8 w-44 text-[12.5px]">
+            <Select value={prospect.status} onChange={(e) => { setStatus(prospect.id, e.target.value as ProspectStatus); toast("ok", `Status → ${statusLabel(e.target.value as ProspectStatus)}`); }} aria-label="Change prospect status" className="h-8 w-full text-[12.5px] sm:w-44">
               {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </Select>
           </div>
