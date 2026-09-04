@@ -1,204 +1,162 @@
 # UserScout
 
-> **Find people who actually need what you built.**
+> Find people who actually need what you built.
 
-UserScout is an open-source user-discovery platform for developers who build open-source
-projects but struggle to find real users and meaningful feedback. Point it at a public
-GitHub repository and it will:
+UserScout helps developers discover potentially relevant users for open-source projects using public GitHub activity and transparent evidence. It turns a repository into a shortlist of people to understand, not a list of people to spam.
 
-1. **Analyze** the project via the official GitHub API (metadata, topics, README, languages).
-2. **Derive** the likely problem space, target audience, and search vocabulary — deterministically.
-3. **Discover** people with *public evidence* of needing the project (open issues asking about the
-   problem, related repos they maintain, related projects they contribute to).
-4. **Score** each prospect 0–100 with a transparent, deterministic, testable model.
-5. **Explain** every score: signal breakdown + links to the exact public activity behind it.
-6. Track the human part: **save → personally contact → reply → trial → feedback → user**,
-   with private notes, a manual outreach workspace, and a conversion funnel computed from
-   your own records only.
+![UserScout landing page](docs/screenshots/landing.png)
 
-**Philosophy: QUALITY > QUANTITY.** UserScout refuses to be a spam platform. See [Hard limits](#hard-limits-what-userscout-will-not-do).
+## Why UserScout?
 
-## Screenshots
+Building a project is only half the work. Finding people who genuinely care about it is difficult.
 
-These captures show the real product UI and empty states; no sample users, prospects, or
-conversion numbers are fabricated.
-
-![Landing page](docs/screenshots/landing.png)
-![Workspace](docs/screenshots/dashboard.png)
-![Outreach workspace](docs/screenshots/outreach.png)
-![Community](docs/screenshots/community.png)
-![Add project](docs/screenshots/project-new.png)
+UserScout helps you research potential users from observable public signals instead of guessing. Every result explains why it surfaced, links to the public evidence, and leaves the outreach decision with you.
 
 ## How it works
 
-1. Add a public GitHub project.
-2. Review the deterministic project analysis.
-3. Run discovery against public GitHub activity.
-4. Inspect the evidence and relevance score.
-5. Save prospects and write personal outreach yourself.
-6. Track replies, trials, feedback, and conversions.
+1. Add your GitHub project.
+2. Review the project analysis.
+3. Discover potentially relevant people.
+4. Review the public evidence.
+5. Save prospects.
+6. Reach out personally.
+7. Track replies, trials, feedback, and conversions.
+
+## What makes UserScout different?
+
+- **Evidence over guesses:** recommendations are tied to public GitHub activity.
+- **Quality over quantity:** weak context cannot masquerade as intent.
+- **Transparent scoring:** every relevance score has a visible breakdown.
+- **Human-controlled outreach:** UserScout never sends messages for you.
+- **Public-data first:** private information is not scraped or modeled.
+- **Open source:** the project is MIT licensed and its core logic is testable.
+
+## Screenshots
+
+### Find relevant people
+
+Discovery presents multiple candidates efficiently, with a score, confidence, source, explanation, and expandable evidence.
+
+![Discovery results](docs/screenshots/discover.png)
+
+### Understand why they are relevant
+
+The prospect view connects the score to public evidence and gives you a private, manual workspace for notes and drafts.
+
+![Prospect detail](docs/screenshots/prospect-detail.png)
+
+### Manage the relationship
+
+The outreach workspace tracks your real pipeline from saved prospect to feedback and user, with no automated campaigns.
+
+![Outreach workspace](docs/screenshots/outreach-populated.png)
+
+### Your workspace
+
+Projects, analysis, and conversion metrics stay grounded in your own records.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+![Project analysis](docs/screenshots/project-detail.png)
+
+![Add a project](docs/screenshots/project-new.png)
+
+![Mobile layout](docs/screenshots/mobile.png)
+
+Screenshots were captured from the running application. Populated discovery screenshots use public data from the `vitejs/vite` repository; the displayed prospect is a real public GitHub result, not fabricated product activity.
+
+## Features
+
+- Public GitHub repository validation and analysis.
+- Deterministic keywords, problem space, audience, and query terms.
+- Evidence-backed discovery through issues, related repositories, and contributors.
+- Relevance scores with signal and confidence breakdowns.
+- Saved prospects with public source links.
+- Manual outreach drafts, private notes, and status timeline.
+- Feedback capture and a record-based conversion funnel.
+- Optional local community index for opted-in project metadata.
+- Static-host-friendly hash routing.
+
+## How scoring works
+
+The score is not a prediction that someone will become a user. It is a transparent relevance signal based on observable public evidence.
+
+| Signal | Maximum | What it means |
+| --- | ---: | --- |
+| Problem evidence | 30 | Publicly asks about or discusses the problem. |
+| Related project | 25 | Maintains a repository matching the project vocabulary. |
+| Related contributions | 15 | Contributes to closely related repositories. |
+| Technology match | 20 | Shares language or topic context. |
+| Recent activity | 15 | Relevant activity is recent. |
+| Audience alignment | 8 | Public bio or topics align with the derived audience. |
+
+Signals are capped at 100. Weak context signals cannot exceed 43 without a strong signal, so “uses the same language” is never presented as proof of need. Confidence is labeled high, medium, or low and can be checked against the breakdown.
+
+## Privacy and anti-spam principles
+
+UserScout is research and organization software, not an outreach automation tool. It:
+
+- does not send messages automatically;
+- does not run bulk outreach or follow-up sequences;
+- does not scrape private information or bypass authentication;
+- does not sell personal information;
+- keeps notes, drafts, and outreach history local in this build;
+- leaves every message and contact decision under human control.
 
 ## Tech stack
 
 - React 18 and TypeScript
-- Vite with Tailwind CSS
-- React Router hash routing for static hosting
+- Vite and Tailwind CSS
+- React Router hash routing
 - GitHub REST API for public repository and activity data
-- Browser `localStorage` for this local-first build
-
----
-
-## Quick start
-
-```bash
-npm install
-npm run dev                 # http://localhost:5173
-npm run build               # production build → dist/
-npm run typecheck           # strict TypeScript check
-```
-
-The static client uses unauthenticated public GitHub API requests. For authenticated production
-use, add a server-side proxy; never put a GitHub token in a `VITE_*` variable because Vite embeds
-it in the browser bundle.
-
-Create a workspace account (stored locally, PBKDF2-hashed), add your repo, run discovery,
-save prospects, and work them through the outreach pipeline.
+- Web Crypto API for local password hashing and IDs
+- Vitest for core regression tests
+- Browser `localStorage` through a replaceable storage adapter
 
 ## Architecture
 
-```
-src/
-├── core/                    # framework-free business logic (unit-testable)
-│   ├── types.ts             # domain model
-│   ├── utils.ts             # crypto (PBKDF2), ids, time, errors
-│   ├── storage.ts           # StorageAdapter interface + localStorage impl
-│   ├── github.ts            # GitHub API client, URL validation, rate limits
-│   ├── analysis.ts          # repo → ProjectProfile (keywords/audience/query terms)
-│   ├── discovery.ts         # evidence-gathering engine (issues/repos/contributors)
-│   ├── scoring.ts           # deterministic, documented scoring model
-│   └── services.ts          # auth/projects/prospects/outreach/feedback + ownership guards
-├── state/store.tsx          # reactive workspace state over services
-├── components/              # icons (hand-drawn SVG), ui primitives, domain widgets, shell
-└── pages/                   # Landing, Auth, Dashboard, ProjectNew, ProjectDetail,
-                             # Discovery, ProspectDetail, Outreach, Community
-```
+The application is organized into a framework-independent core, a reactive state layer, and a React UI. GitHub data flows through an interface into analysis and discovery; services enforce ownership before private records are read or changed.
 
-**Layering rules**
+See [docs/architecture.md](docs/architecture.md) for the data flow, boundaries, security model, and production deployment notes.
 
-- Business logic lives in `core/` — never in route handlers or components.
-- All persistence goes through `StorageAdapter`. The bundled `LocalStorageAdapter` makes this a
-  local-first build (everything stays in your browser). Swap in a server-backed adapter
-  (PostgreSQL behind an API) without touching services or UI — that's the production path.
-- External integrations sit behind interfaces (`GitHubClient`) so the transport is replaceable.
+## Local development
 
-**Data flow:** `GitHub API → analysis → discovery candidates → scoreCandidate → saveResults →
-prospects → outreach events / feedback → computeFunnel`.
-
-## Scoring model (deterministic & documented)
-
-| Signal | Max | Rule |
-|---|---|---|
-| Problem evidence | 30 | Publicly asked for / discussed the exact problem (issue title/body). Question-shaped: 30 · discussion: 20 |
-| Related project | 25 | Maintains a repo matching the project's query terms. 15 base + 5 per matched term (max +10) |
-| Contributes to related repos | 15 | Recent commits in closely related repos. 12 base, +3 for 2+ repos |
-| Technology match | 20 | Language match +8 · topic/keyword overlap +4 each (max +12). *Weak* |
-| Recent activity | 15 | ≤30d: 15 · ≤90d: 10 · ≤180d: 6 · ≤1y: 3. *Weak* |
-| Audience alignment | 8 | Bio/topics align with derived audience. *Weak* |
-
-- Signals sum, capped at 100.
-- **Confidence:** HIGH = score ≥ 70 *and* a strong signal ≥ 20 pts · MEDIUM = score ≥ 45 or any
-  strong signal · else LOW.
-- **Weak signals alone can never exceed 43/100.** "Uses Python" is context, not intent — a
-  weak-only candidate is always a LOW-confidence cold lead.
-- Same evidence in → same score out. No randomness, no black box. The model is implemented in
-  `src/core/scoring.ts` as pure functions, ready for property-based unit tests.
-
-## GitHub integration & security
-
-- **Official API only**, over HTTPS, fixed host `api.github.com`.
-- **SSRF-safe by construction:** repo input is validated against `github.com` with a strict
-  allow-list regex (`parseRepoInput` in `src/core/github.ts`); only the extracted `owner/repo`
-  is ever interpolated into request paths. Ports, credentials in URLs, and non-GitHub hosts
-  are rejected.
-- **No browser GitHub secrets.** This static client uses unauthenticated public API requests.
-  Authenticated production use requires a server-side proxy; never place a GitHub token in a
-  `VITE_*` variable because Vite embeds it in the browser bundle.
-- **Failures handled gracefully:** timeouts (9s AbortController), 404 (nonexistent/private repo),
-  403/429 rate limits with reset times surfaced in the UI, malformed JSON, network errors.
-- **Rate limiting respected on the client side:** discovery paces requests (~700ms apart) and
-  uses ≤ ~15 calls per run. The UI shows remaining core/search budget live.
-- **Passwords:** PBKDF2-SHA256, 150k iterations, random 16-byte salts. Never plaintext.
-- **Authorization:** every service call verifies `resource.ownerId === actorId` (IDOR
-  protection). Private notes, drafts, outreach history and feedback are never exposed
-  publicly; the community index shares only already-public repo metadata + username, and
-  only when the owner opts in.
-- **Input validation** on usernames, passwords, notes (2k), drafts (5k), ratings (1–5).
-- No raw HTML injection; React renders all external strings as text.
-
-## Hard limits — what UserScout will NOT do
-
-- ❌ automatic mass emails or bulk messaging
-- ❌ automated outreach campaigns / sequences
-- ❌ scraping private information or bypassing auth / API restrictions
-- ❌ collecting unnecessary personal data (only public GitHub fields are modeled)
-- ❌ selling or sharing personal information
-- ❌ inventing statistics — funnel metrics are computed from your own rows, or not shown
-
-The human developer writes every message and presses send themselves, from their own
-accounts. UserScout provides *context for personalized outreach*, nothing more.
-
-## Environment variables
-
-See [.env.example](.env.example).
-
-| Variable | Required | Purpose |
-|---|---|---|
-| None | — | Use a server-side proxy for authenticated GitHub requests in production. |
-
-## Testing
-
-The scoring engine, URL validation, and service ownership guards have focused Vitest coverage:
+Requirements: Node.js 20 or newer.
 
 ```bash
+npm install
+npm run dev
 npm run test
 npm run typecheck
 npm run build
 ```
 
-The browser flow is manually smoke-tested against the Vite development server.
+Open the local URL printed by Vite. Create a workspace account, add a public repository, and run discovery. GitHub requests in this static build are unauthenticated; do not put tokens in `VITE_*` variables because Vite embeds them in the browser bundle.
 
-## Production deployment
+## Limitations
 
-- `npm run build` produces a static bundle (`dist/`) deployable to any static host
-  (Netlify, Vercel, GitHub Pages, S3). Use hash routing (already configured) or configure
-  SPA rewrites.
-- For multi-device / multi-user production use, implement a server-backed
-  `StorageAdapter` (PostgreSQL, row-level ownership) behind your API; `core/services.ts`
-  is already organized around ownership-guarded operations and needs no changes.
-- Add real OAuth (e.g. GitHub OAuth) server-side; the local PBKDF2 accounts in this build
-  demonstrate the ownership model but are device-local by design.
+- Accounts and CRM records are stored in browser `localStorage` on one device.
+- Local authentication demonstrates the ownership model but is not a server security boundary.
+- Unauthenticated GitHub rate limits can constrain discovery runs.
+- There is no backend API, OAuth provider, or server database in this repository.
+- True multi-user production deployment requires server-side sessions, a database-backed storage adapter, and a server-side GitHub proxy.
 
-### OAuth and database setup
+## Roadmap
 
-There is no OAuth provider, backend API, or server database in this repository. The included
-account flow and `LocalStorageAdapter` are intentionally local demonstrations. For production,
-add server-side OAuth/session handling, a server-side GitHub proxy, and a database-backed
-`StorageAdapter` with row-level ownership before storing sensitive or multi-device data.
+- [x] Public repository analysis and evidence-backed discovery
+- [x] Transparent scoring and manual outreach tracking
+- [x] Local-first persistence and focused core tests
+- [ ] Server-backed persistence
+- [ ] Production OAuth
+- [ ] Authenticated GitHub API proxy
+- [ ] Multi-device workspaces
+- [ ] Additional discovery sources
+- [ ] Data export
 
-## Known limitations (honest list)
+## Contributing
 
-1. **Local-first persistence.** Accounts and CRM data live in `localStorage` on one device.
-   Clearing site data clears them. Export-before-clear is a planned feature.
-2. **Client-side auth is a demonstration, not a security boundary.** Anyone with device
-   access can inspect `localStorage`. Do not treat this build as protecting truly sensitive
-   data; wire the server adapter for that.
-3. **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy discovery use.
-  Authenticated production use requires a server-side proxy.
-4. **Discovery quality follows repo quality.** Repos with no description/topics yield weak
-   query terms and weaker prospects — by design, the engine refuses to guess.
-5. Discovery dedupes per project; the same person can appear under two of your projects
-   (that's legitimate — different contexts).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Contributions should preserve evidence-based discovery, human-controlled outreach, accessible UI, and ownership checks.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
