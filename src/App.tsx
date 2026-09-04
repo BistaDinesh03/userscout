@@ -1,4 +1,4 @@
-/* UserScout — app entry: providers, hash router (static-host safe), toasts. */
+﻿/* UserScout — app entry: providers, hash router (static-host safe), toasts. */
 
 import { useEffect } from "react";
 import { HashRouter, Link, Route, Routes, useLocation } from "react-router-dom";
@@ -19,7 +19,9 @@ import { Button } from "./components/ui";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo({ top: 0 }), [pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [pathname]);
   return null;
 }
 

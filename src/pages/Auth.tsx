@@ -1,6 +1,6 @@
 /* Auth — local accounts, PBKDF2-hashed passwords, honest about scope. */
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useWorkspace } from "../state/store";
 import { AppError } from "../core/utils";
@@ -11,7 +11,8 @@ import { cx } from "../core/utils";
 
 export default function AuthPage() {
   const [params] = useSearchParams();
-  const [mode, setMode] = useState<"login" | "register">(params.get("mode") === "register" ? "register" : "login");
+  const requestedMode = params.get("mode") === "register" ? "register" : "login";
+  const [mode, setMode] = useState<"login" | "register">(requestedMode);
   const { auth, toast } = useWorkspace();
   const nav = useNavigate();
 
@@ -20,6 +21,11 @@ export default function AuthPage() {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setMode(requestedMode);
+    setErrors({});
+  }, [requestedMode]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

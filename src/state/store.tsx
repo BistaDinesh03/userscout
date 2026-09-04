@@ -1,4 +1,4 @@
-/* ── App state ──────────────────────────────────────────────────────────
+﻿/* ── App state ─────────────────────────────────────────────────────────────
  * Thin reactive layer over the services. Components never talk to the
  * storage adapter directly; they dispatch actions and render state.
  */
@@ -77,25 +77,40 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const reload = useCallback(() => {
-    const u = services.auth.restore(storage.getMeta("session"));
-    setUser(u);
-    if (u) {
-      setProjects(services.projects.list(u.id));
-      const pros = storage.read<Prospect>("prospects").filter((p) => p.ownerId === u.id);
-      setProspects(pros.sort((a, b) => b.score - a.score));
-      const ids = new Set(pros.map((p) => p.id));
-      setEvents(storage.read<TimelineEvent>("events").filter((e) => e.ownerId === u.id));
-      setDrafts(storage.read<Draft>("drafts").filter((d) => ids.has(d.prospectId)));
-      setFeedback(storage.read<FeedbackEntry>("feedback").filter((f) => f.ownerId === u.id));
-    } else {
+    try {
+      const sessionToken = storage.getMeta("session");
+      setToken(sessionToken);
+      const u = services.auth.restore(sessionToken);
+      setUser(u);
+      if (u) {
+        setProjects(services.projects.list(u.id));
+        const pros = storage.read<Prospect>("prospects").filter((p) => p.ownerId === u.id);
+        setProspects(pros.sort((a, b) => b.score - a.score));
+        const ids = new Set(pros.map((p) => p.id));
+        setEvents(storage.read<TimelineEvent>("events").filter((e) => e.ownerId === u.id));
+        setDrafts(storage.read<Draft>("drafts").filter((d) => ids.has(d.prospectId)));
+        setFeedback(storage.read<FeedbackEntry>("feedback").filter((f) => f.ownerId === u.id));
+      } else {
+        setProjects([]);
+        setProspects([]);
+        setEvents([]);
+        setDrafts([]);
+        setFeedback([]);
+      }
+      setCommunity(listDiscoverable(storage, u?.id ?? null));
+    } catch (err) {
+      console.error("Failed to restore session:", err);
+      setUser(null);
+      setToken(null);
       setProjects([]);
       setProspects([]);
       setEvents([]);
       setDrafts([]);
       setFeedback([]);
+      setCommunity([]);
+    } finally {
+      setReady(true);
     }
-    setCommunity(listDiscoverable(storage, u?.id ?? null));
-    setReady(true);
   }, [services]);
 
   useEffect(() => {
