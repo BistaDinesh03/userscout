@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title>UserScout radar logo</title>
+  <circle cx="16" cy="16" r="14" fill="none" stroke="#f2a93b" stroke-width="2"/>
+  <circle cx="16" cy="16" r="7" fill="none" stroke="#f2a93b" stroke-width="1.5" opacity=".55"/>
+  <path d="M16 16 L27 8" stroke="#f2a93b" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="21" cy="20" r="2.4" fill="#7cc98f"/>
+</svg>
