@@ -8,9 +8,9 @@ ownership guards will be closed.
 
 ```bash
 npm install
-cp .env.example .env   # optional VITE_GITHUB_TOKEN
 npm run dev
 npm run typecheck
+npm run test
 npm run build
 ```
 
@@ -35,6 +35,7 @@ npm run build
 ## Conventions
 
 - TypeScript strict; no `any` escapes without a comment.
+- GitHub requests in this static build are unauthenticated; authenticated use belongs behind a server-side proxy.
 - Errors: throw `AppError` (domain) or `GitHubApiError` (external); UI maps them to states.
 - No new dependencies without justification in the PR description.
 - No `console.log` in committed code; no secrets, ever (pre-commit grep for `ghp_`).

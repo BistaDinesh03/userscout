@@ -260,6 +260,17 @@ export class ProspectService {
     }
     if (to === "replied") p.repliedAt = now;
     if (to === "user") p.convertedAt = now;
+    if (to !== "contacted" && to !== "replied" && to !== "tried" && to !== "feedback" && to !== "user") {
+      p.contactedAt = null;
+      p.contactChannel = null;
+      p.repliedAt = null;
+      p.convertedAt = null;
+    } else if (to !== "replied" && to !== "tried" && to !== "feedback" && to !== "user") {
+      p.repliedAt = null;
+      p.convertedAt = null;
+    } else if (to !== "tried" && to !== "feedback" && to !== "user") {
+      p.convertedAt = null;
+    }
 
     const ev = this.event(p, "status", opts.note || `Status: ${statusLabel(from)} → ${statusLabel(to)}`, { from, to, channel: opts.channel });
     const events = [...this.db.read<TimelineEvent>("events"), ev];

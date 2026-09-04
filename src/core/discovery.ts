@@ -109,7 +109,8 @@ export async function runDiscovery(
       if (!login || excluded(login) || it.pull_request) continue;
       const repoFull = it.repository_url.replace(/^https:\/\/api\.github\.com\/repos\//, "");
       const c = get(login);
-      const asking = QUESTION_PATTERN.test(it.title);
+      const issueText = `${it.title}\n${it.body ?? ""}`;
+      const asking = QUESTION_PATTERN.test(issueText);
       const created = new Date(it.created_at).getTime();
       c.evidences.push({
         kind: "issue",

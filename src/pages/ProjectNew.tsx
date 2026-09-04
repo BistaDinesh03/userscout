@@ -82,7 +82,6 @@ export default function ProjectNew() {
                 spellCheck={false}
                 autoFocus
                 className="font-mono"
-                aria-describedby="repo-hint"
               />
             </Field>
             <div className="flex items-center gap-3">

@@ -240,6 +240,7 @@ export default function ProspectDetail() {
                 {fbEntry.useful && <p className="mt-1.5 text-[12px] text-fog-400"><strong className="text-fog-300">Useful:</strong> {fbEntry.useful}</p>}
                 {fbEntry.confusing && <p className="mt-1 text-[12px] text-fog-400"><strong className="text-fog-300">Confusing:</strong> {fbEntry.confusing}</p>}
                 {fbEntry.improve && <p className="mt-1 text-[12px] text-fog-400"><strong className="text-fog-300">Improve:</strong> {fbEntry.improve}</p>}
+                {fbEntry.notes && <p className="mt-1 text-[12px] text-fog-400"><strong className="text-fog-300">Notes:</strong> {fbEntry.notes}</p>}
                 <span className="mt-2 inline-block font-mono text-[10px] text-tide-400">click to edit</span>
               </button>
             )}
@@ -259,6 +260,7 @@ export default function ProspectDetail() {
                 <Field label="What was useful?"><Textarea value={fb.useful} onChange={(e) => setFb((f) => ({ ...f, useful: e.target.value }))} className="min-h-[54px]" placeholder="Which part solved something real?" /></Field>
                 <Field label="What was confusing?"><Textarea value={fb.confusing} onChange={(e) => setFb((f) => ({ ...f, confusing: e.target.value }))} className="min-h-[54px]" placeholder="Where did they stall?" /></Field>
                 <Field label="What should improve?"><Textarea value={fb.improve} onChange={(e) => setFb((f) => ({ ...f, improve: e.target.value }))} className="min-h-[54px]" placeholder="The one thing they'd change." /></Field>
+                <Field label="Written feedback"><Textarea value={fb.notes} onChange={(e) => setFb((f) => ({ ...f, notes: e.target.value }))} className="min-h-[72px]" placeholder="Capture anything worth remembering." /></Field>
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="w-44">
                     <Field label="Would use again?">

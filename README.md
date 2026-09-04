@@ -18,17 +18,48 @@ GitHub repository and it will:
 
 **Philosophy: QUALITY > QUANTITY.** UserScout refuses to be a spam platform. See [Hard limits](#hard-limits-what-userscout-will-not-do).
 
+## Screenshots
+
+These captures show the real product UI and empty states; no sample users, prospects, or
+conversion numbers are fabricated.
+
+![Landing page](docs/screenshots/landing.png)
+![Workspace](docs/screenshots/dashboard.png)
+![Outreach workspace](docs/screenshots/outreach.png)
+![Community](docs/screenshots/community.png)
+![Add project](docs/screenshots/project-new.png)
+
+## How it works
+
+1. Add a public GitHub project.
+2. Review the deterministic project analysis.
+3. Run discovery against public GitHub activity.
+4. Inspect the evidence and relevance score.
+5. Save prospects and write personal outreach yourself.
+6. Track replies, trials, feedback, and conversions.
+
+## Tech stack
+
+- React 18 and TypeScript
+- Vite with Tailwind CSS
+- React Router hash routing for static hosting
+- GitHub REST API for public repository and activity data
+- Browser `localStorage` for this local-first build
+
 ---
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env        # optional: add VITE_GITHUB_TOKEN for higher rate limits
 npm run dev                 # http://localhost:5173
 npm run build               # production build → dist/
 npm run typecheck           # strict TypeScript check
 ```
+
+The static client uses unauthenticated public GitHub API requests. For authenticated production
+use, add a server-side proxy; never put a GitHub token in a `VITE_*` variable because Vite embeds
+it in the browser bundle.
 
 Create a workspace account (stored locally, PBKDF2-hashed), add your repo, run discovery,
 save prospects, and work them through the outreach pipeline.
@@ -89,8 +120,9 @@ prospects → outreach events / feedback → computeFunnel`.
   allow-list regex (`parseRepoInput` in `src/core/github.ts`); only the extracted `owner/repo`
   is ever interpolated into request paths. Ports, credentials in URLs, and non-GitHub hosts
   are rejected.
-- **Secrets via environment** (`VITE_GITHUB_TOKEN`, optional). Tokens are only ever sent to
-  `api.github.com` and never logged. `.env` is gitignored.
+- **No browser GitHub secrets.** This static client uses unauthenticated public API requests.
+  Authenticated production use requires a server-side proxy; never place a GitHub token in a
+  `VITE_*` variable because Vite embeds it in the browser bundle.
 - **Failures handled gracefully:** timeouts (9s AbortController), 404 (nonexistent/private repo),
   403/429 rate limits with reset times surfaced in the UI, malformed JSON, network errors.
 - **Rate limiting respected on the client side:** discovery paces requests (~700ms apart) and
@@ -121,19 +153,19 @@ See [.env.example](.env.example).
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `VITE_GITHUB_TOKEN` | No | Personal access token (no scopes needed for public data). Raises limits to 5,000 core/h and 30 search/min. |
+| None | — | Use a server-side proxy for authenticated GitHub requests in production. |
 
 ## Testing
 
-The scoring engine, URL validation, and discovery aggregation are pure functions in `core/`
-designed for direct unit testing (e.g. `vitest run src/core`). Deterministic scoring means
-tests can assert exact scores for fixed evidence fixtures.
+The scoring engine, URL validation, and service ownership guards have focused Vitest coverage:
 
-> **Note on this build:** the sandbox used to generate this repository has no shell access,
-> so a test runner is not wired into `package.json` and tests were not executed here.
-> Verification was done via strict typecheck + production build + manual flow review.
-> Adding `vitest` and fixture tests for `scoreCandidate` / `parseRepoInput` is the
-> recommended first contribution — see [CONTRIBUTING.md](CONTRIBUTING.md).
+```bash
+npm run test
+npm run typecheck
+npm run build
+```
+
+The browser flow is manually smoke-tested against the Vite development server.
 
 ## Production deployment
 
@@ -146,6 +178,13 @@ tests can assert exact scores for fixed evidence fixtures.
 - Add real OAuth (e.g. GitHub OAuth) server-side; the local PBKDF2 accounts in this build
   demonstrate the ownership model but are device-local by design.
 
+### OAuth and database setup
+
+There is no OAuth provider, backend API, or server database in this repository. The included
+account flow and `LocalStorageAdapter` are intentionally local demonstrations. For production,
+add server-side OAuth/session handling, a server-side GitHub proxy, and a database-backed
+`StorageAdapter` with row-level ownership before storing sensitive or multi-device data.
+
 ## Known limitations (honest list)
 
 1. **Local-first persistence.** Accounts and CRM data live in `localStorage` on one device.
@@ -154,7 +193,7 @@ tests can assert exact scores for fixed evidence fixtures.
    access can inspect `localStorage`. Do not treat this build as protecting truly sensitive
    data; wire the server adapter for that.
 3. **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy discovery use.
-   Set `VITE_GITHUB_TOKEN`.
+  Authenticated production use requires a server-side proxy.
 4. **Discovery quality follows repo quality.** Repos with no description/topics yield weak
    query terms and weaker prospects — by design, the engine refuses to guess.
 5. Discovery dedupes per project; the same person can appear under two of your projects

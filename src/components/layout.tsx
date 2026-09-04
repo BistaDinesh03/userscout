@@ -119,7 +119,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               className={({ isActive }) =>
                 cx(
                   "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors",
-                  isActive ? "bg-pine-750 text-signal-300" : "text-fog-400 hover:text-fog-100",
+                  isActive || (n.to === "/app/projects" && loc.pathname.startsWith("/app/prospects"))
+                    ? "bg-pine-750 text-signal-300"
+                    : "text-fog-400 hover:text-fog-100",
                 )
               }
             >

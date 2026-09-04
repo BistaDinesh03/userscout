@@ -17,11 +17,16 @@ const ROOT_FILES = import.meta.glob(
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
-const DOT_FILES = import.meta.glob(["/.env.example", "/.gitignore"], {
+const DOT_FILES = import.meta.glob(["/.gitignore"], {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
+
+const ENV_EXAMPLE = `# GitHub access is intentionally unauthenticated in this static client.
+# Do not put personal access tokens in VITE_* variables: Vite embeds them in
+# the browser bundle. Use a server-side proxy for authenticated production use.
+`;
 
 const SETUP_MD = `# UserScout — quick start
 
@@ -44,12 +49,10 @@ Shell notes:
 Other scripts: "npm run build" (production build), "npm run typecheck".
 Node 18+ recommended.
 
-## 2. Optional: raise GitHub API rate limits
+## 2. GitHub API limits
 
-Copy ".env.example" to ".env" and set VITE_GITHUB_TOKEN to any GitHub
-personal access token (no special scopes needed — public read only).
-Unauthenticated: 60 core requests/h and 10 search/min. With a token:
-5,000/h and 30/min. Then restart the dev server.
+This static client uses unauthenticated public requests: 60 core requests/h
+and 10 search/min. Authenticated production use requires a server-side proxy.
 
 ## 3. Push to GitHub
 
@@ -62,7 +65,8 @@ git remote add origin https://github.com/YOUR-USERNAME/userscout.git
 git push -u origin main
 \`\`\`
 
-".env" is already gitignored, so tokens never leave your machine.
+The app uses only public GitHub requests in this static build. Do not add
+secrets to VITE_* variables because Vite embeds them in the browser bundle.
 
 ## What's inside
 
@@ -177,7 +181,7 @@ async function buildZip(entries: { path: string; data: Uint8Array }[]): Promise<
 /* ── Public API ── */
 
 export function sourceFileCount(): number {
-  return Object.keys(SRC_FILES).length + Object.keys(ROOT_FILES).length + Object.keys(DOT_FILES).length + 1;
+  return Object.keys(SRC_FILES).length + Object.keys(ROOT_FILES).length + Object.keys(DOT_FILES).length + 2;
 }
 
 export async function downloadProjectZip(): Promise<number> {
@@ -188,6 +192,7 @@ export async function downloadProjectZip(): Promise<number> {
   for (const [path, content] of Object.entries({ ...ROOT_FILES, ...DOT_FILES })) {
     add(path.replace(/^\//, ""), content);
   }
+  add(".env.example", ENV_EXAMPLE);
   for (const [path, content] of Object.entries(SRC_FILES)) {
     add(path.replace(/^\//, ""), content);
   }

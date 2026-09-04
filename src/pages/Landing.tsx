@@ -1,6 +1,6 @@
 /* Landing — opens with the thing UserScout actually does: scout a repo. */
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { analyzeRepository } from "../core/analysis";
 import { GitHubApiError } from "../core/github";
@@ -71,14 +71,18 @@ function DownloadButton({ variant = "outline", size = "sm", withLabel = true }: 
 }
 
 function TopNav({ signedIn }: { signedIn: boolean }) {
+  const scrollTo = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   return (
     <header className="sticky top-0 z-30 border-b border-pine-800/80 bg-pine-950/85 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
         <a href="#top" aria-label="UserScout"><Logo /></a>
         <nav className="hidden items-center gap-6 text-[13px] text-fog-400 md:flex" aria-label="Landing sections">
-          <a className="hover:text-signal-300 transition-colors" href="#signals">Signal model</a>
-          <a className="hover:text-signal-300 transition-colors" href="#scoring">Scoring</a>
-          <a className="hover:text-signal-300 transition-colors" href="#ethics">Ethics</a>
+          <a className="hover:text-signal-300 transition-colors" href="#signals" onClick={scrollTo("signals")}>Signal model</a>
+          <a className="hover:text-signal-300 transition-colors" href="#scoring" onClick={scrollTo("scoring")}>Scoring</a>
+          <a className="hover:text-signal-300 transition-colors" href="#ethics" onClick={scrollTo("ethics")}>Ethics</a>
         </nav>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline-flex"><DownloadButton /></span>
@@ -161,7 +165,7 @@ function ScoutSection({ signedIn }: { signedIn: boolean }) {
           <Link to={signedIn ? "/app/projects/new" : "/auth?mode=register"}>
             <Button>Add your project <IArrowR size={14} /></Button>
           </Link>
-          <a href="#scoring" className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300">
+          <a href="#scoring" onClick={(e) => { e.preventDefault(); document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300">
             How scoring works
           </a>
         </div>
@@ -443,6 +447,10 @@ function SectionHead({ kicker, title, body, compact }: { kicker: string; title: 
 }
 
 function Footer() {
+  const scrollTo = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   return (
     <footer className="border-t border-pine-800 py-10">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 md:px-6">
@@ -451,9 +459,9 @@ function Footer() {
           <span className="font-mono text-[11px] text-fog-500">MIT licensed · open source</span>
         </div>
         <div className="flex items-center gap-5 text-[12px] text-fog-500">
-          <a href="#signals" className="hover:text-fog-200">Signals</a>
-          <a href="#scoring" className="hover:text-fog-200">Scoring</a>
-          <a href="#ethics" className="hover:text-fog-200">Ethics</a>
+          <a href="#signals" onClick={scrollTo("signals")} className="hover:text-fog-200">Signals</a>
+          <a href="#scoring" onClick={scrollTo("scoring")} className="hover:text-fog-200">Scoring</a>
+          <a href="#ethics" onClick={scrollTo("ethics")} className="hover:text-fog-200">Ethics</a>
           <Link to="/auth" className="hover:text-fog-200">Workspace</Link>
         </div>
         <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">

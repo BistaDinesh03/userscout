@@ -64,8 +64,12 @@ export function parseRepoInput(raw: string): RepoRef {
     repo = parts[1];
   }
 
-  owner = decodeURIComponent(owner);
-  repo = decodeURIComponent(repo).replace(/\.git$/i, "");
+  try {
+    owner = decodeURIComponent(owner);
+    repo = decodeURIComponent(repo).replace(/\.git$/i, "");
+  } catch {
+    throw new GitHubApiError(0, "That repository URL contains invalid encoding.");
+  }
 
   if (!NAME_RE.test(owner) || !NAME_RE.test(repo)) {
     throw new GitHubApiError(0, "Owner and repo may only contain letters, digits, '-', '_' or '.'.");
@@ -76,9 +80,6 @@ export function parseRepoInput(raw: string): RepoRef {
   return { owner, repo, fullName: `${owner}/${repo}` };
 }
 
-/* Optional token from build-time env. Only ever sent to api.github.com. */
-const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
-const TOKEN: string | undefined = env.VITE_GITHUB_TOKEN || undefined;
 const BASE = "https://api.github.com";
 const TIMEOUT_MS = 9000;
 
@@ -109,6 +110,7 @@ export interface RawRepo {
 }
 export interface RawIssue {
   title: string;
+  body: string | null;
   html_url: string;
   created_at: string;
   state: string;
@@ -140,7 +142,6 @@ export function createGitHubClient(onRate?: (r: RateInfo) => void): GitHubClient
       Accept: accept,
       "X-GitHub-Api-Version": "2022-11-28",
     };
-    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`;
     let res: Response;
     try {
       res = await fetch(`${BASE}${path}`, { signal: ctrl.signal, headers });
@@ -189,7 +190,6 @@ export function createGitHubClient(onRate?: (r: RateInfo) => void): GitHubClient
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     const headers: Record<string, string> = { Accept: "application/vnd.github.raw" };
-    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`;
     try {
       const res = await fetch(`${BASE}/repos/${ref.owner}/${ref.repo}/readme`, { signal: ctrl.signal, headers });
       if (!res.ok) return "";

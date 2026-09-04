@@ -148,17 +148,39 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const previous = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !ref.current) return;
+      const focusable = [...ref.current.querySelectorAll<HTMLElement>("button, [href], input, textarea, select, [tabindex]:not([tabindex='-1'])")]
+        .filter((el) => !el.hasAttribute("disabled"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     ref.current?.querySelector<HTMLElement>("button, [href], input, textarea, select")?.focus();
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
   }, [open, onClose]);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-pine-950/80 p-4 pt-[9vh] backdrop-blur-[2px]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={cx("reveal w-full rounded-lg border border-pine-600 bg-pine-850 shadow-panel", wide ? "max-w-2xl" : "max-w-md")}>
+      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby="modal-title" className={cx("reveal w-full rounded-lg border border-pine-600 bg-pine-850 shadow-panel", wide ? "max-w-2xl" : "max-w-md")}>
         <div className="flex items-center justify-between border-b border-pine-700 px-5 py-3.5">
-          <h2 className="font-display text-[15px] font-semibold">{title}</h2>
+          <h2 id="modal-title" className="font-display text-[15px] font-semibold">{title}</h2>
           <button onClick={onClose} className="rounded p-1 text-fog-400 hover:bg-pine-700 hover:text-fog-100" aria-label="Close dialog">
             <IX size={15} />
           </button>
