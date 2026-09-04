@@ -8,10 +8,11 @@ import { SIGNAL_DOCS, bandOf } from "../core/scoring";
 import type { AnalysisProgress, DiscoveryProgress, ProjectProfile } from "../core/types";
 import { useWorkspace } from "../state/store";
 import { Chip, ConsoleLog, Radar, ScoreDial } from "../components/bits";
-import { IAlert, IArrowR, IBranch, ICheck, ICompass, IEye, IFlag, IHand, IIssue, ILock, IRadar, ISearch, IShield, IStar, ITerminal, IUsers, IX, IZap } from "../components/icons";
+import { IAlert, IArrowR, IBranch, ICheck, ICompass, IDownload, IEye, IFlag, IHand, IIssue, ILock, IRadar, ISearch, IShield, IStar, ITerminal, IUsers, IX, IZap, IZip } from "../components/icons";
 import { Badge, Button, ConfidenceBadge, Input } from "../components/ui";
 import { Logo } from "../components/layout";
 import { clamp, cx, formatNumber } from "../core/utils";
+import { downloadProjectZip, sourceFileCount } from "../download";
 
 const PIPELINE = [
   "GitHub repo",
@@ -44,6 +45,31 @@ export default function Landing() {
   );
 }
 
+/* One-click source bundle — the whole project as a ZIP, built in-browser. */
+function DownloadButton({ variant = "outline", size = "sm", withLabel = true }: { variant?: "outline" | "ghost"; size?: "sm" | "md"; withLabel?: boolean }) {
+  const { toast } = useWorkspace();
+  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
+  const run = async () => {
+    if (state === "busy") return;
+    setState("busy");
+    try {
+      const n = await downloadProjectZip();
+      setState("done");
+      toast("ok", `userscout-source.zip saved — ${n} files. Unzip, then: npm install; npm run dev`);
+      window.setTimeout(() => setState("idle"), 2600);
+    } catch {
+      setState("idle");
+      toast("err", "Could not build the ZIP in this browser. Try a current Chrome/Firefox/Edge/Safari.");
+    }
+  };
+  return (
+    <Button variant={variant} size={size} onClick={run} loading={state === "busy"} aria-label="Download the complete project source as a ZIP file">
+      {state === "done" ? <ICheck size={13} /> : <IDownload size={13} />}
+      {withLabel && (state === "done" ? "Saved" : "Download source")}
+    </Button>
+  );
+}
+
 function TopNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b border-pine-800/80 bg-pine-950/85 backdrop-blur-sm">
@@ -55,6 +81,7 @@ function TopNav({ signedIn }: { signedIn: boolean }) {
           <a className="hover:text-signal-300 transition-colors" href="#ethics">Ethics</a>
         </nav>
         <div className="flex items-center gap-2">
+          <span className="hidden sm:inline-flex"><DownloadButton /></span>
           {signedIn ? (
             <Link to="/app/projects"><Button size="sm">Open workspace <IArrowR size={13} /></Button></Link>
           ) : (
@@ -428,6 +455,12 @@ function Footer() {
           <a href="#scoring" className="hover:text-fog-200">Scoring</a>
           <a href="#ethics" className="hover:text-fog-200">Ethics</a>
           <Link to="/auth" className="hover:text-fog-200">Workspace</Link>
+        </div>
+        <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">
+          <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-fog-500">
+            <IZip size={12} className="text-signal-400/80" /> userscout-source.zip · {sourceFileCount()} files · MIT
+          </span>
+          <span className="sm:hidden"><DownloadButton /></span>
         </div>
         <p className="w-full font-mono text-[10.5px] text-fog-500 md:w-auto">local-first build — accounts & CRM live in your browser, not on a server</p>
       </div>

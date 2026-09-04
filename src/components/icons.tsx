@@ -257,3 +257,16 @@ export const IBook = make(
     <path d="M8.5 7.5h7M8.5 11h5" />
   </>,
 );
+export const IDownload = make(
+  <>
+    <path d="M12 3.5v10.5M7.5 10 12 14.5 16.5 10" />
+    <path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" />
+  </>,
+);
+export const IZip = make(
+  <>
+    <path d="M5.5 6.5A2 2 0 0 1 7.5 4.5h6l5 5v8a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2z" />
+    <path d="M13.5 4.5v5h5" />
+    <path d="M9.5 9.5h1.5M9.5 12.5h1.5M9.5 15.5h1.5" />
+  </>,
+);
