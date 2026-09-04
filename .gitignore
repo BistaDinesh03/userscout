@@ -1,5 +1,29 @@
+# dependencies
 node_modules/
-.next/
+
+# build output
 dist/
-build/
+dist-ssr/
+
+# environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# logs
+logs/
 *.log
+npm-debug.log*
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.sw?
+
+# test coverage
+coverage/
+.next/
+build/
