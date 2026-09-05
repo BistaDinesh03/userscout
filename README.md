@@ -1,4 +1,3 @@
-﻿how HEAD\~1:README.md
 # UserScout
 
 > **Find people who actually need what you built.**
@@ -18,9 +17,11 @@ UserScout is an open-source user-discovery platform for developers who ship open
 
 These captures show the real product UI and empty states. No sample users, prospects, or conversion numbers are fabricated.
 
-![Landing page](screenshots/screenshot-landing.png)
-![Prospect Profile](screenshots/screenshot-prospect.png)
-![Discovery](screenshots/screenshot-discovery.png)
+![Landing page](docs/screenshots/landing.png)
+![Workspace](docs/screenshots/dashboard.png)
+![Outreach workspace](docs/screenshots/outreach.png)
+![Community](docs/screenshots/community.png)
+![Add project](docs/screenshots/project-new.png)
 
 ## How it works
 
