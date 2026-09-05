@@ -18,9 +18,10 @@
 
 <p align="center">
   <a href="https://critique-qqz9.onrender.com/project/12">
-    <img src="https://img.shields.io/badge/Reviewed_on-Critique-4a9eff?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTUtMTAtNXoiLz48cGF0aCBkPSJNMiAxN2wxMCA1IDEwLTUiLz48cGF0aCBkPSJNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4=" alt="Reviewed on Critique" />
+    <img src="https://critique-qqz9.onrender.com/badge/12.svg" alt="Critique feedback badge" />
   </a>
 </p>
+
 <p align="center">
   <img src="https://img.shields.io/badge/Open_Source-MIT-f2a93b?style=flat-square" alt="Open Source" />
   <img src="https://img.shields.io/badge/Data-Public_GitHub_Only-7cc98f?style=flat-square" alt="Public GitHub Data" />
