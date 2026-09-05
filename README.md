@@ -2,54 +2,75 @@
   <img src="docs/userscout-logo.svg" alt="UserScout radar logo" width="72" />
 </p>
 
-# UserScout
+<h1 align="center">UserScout</h1>
 
-> **Find people who actually need what you built.**
+<p align="center"><strong>Find people who actually need what you built.</strong></p>
 
 <p align="center">
-  <img src="docs/demo/userscout-demo.gif" alt="UserScout demo" width="100%" />
+  Open-source user discovery for developers. Find public evidence connected to the problems your project solves, understand why someone is relevant, and reach out personally.
 </p>
 
-Open-source user discovery for developers. Find public evidence connected to the problems your project solves, understand why someone is relevant, and reach out personally.
+<p align="center">
+  <a href="https://github.com/BistaDinesh03/userscout"><strong>View on GitHub</strong></a>
+  &nbsp;|&nbsp;
+  <a href="#quick-start"><strong>Live Demo</strong></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Open_Source-MIT-f2a93b?style=flat-square" alt="Open Source" />
+  <img src="https://img.shields.io/badge/Data-Public_GitHub_Only-7cc98f?style=flat-square" alt="Public GitHub Data" />
+  <img src="https://img.shields.io/badge/Storage-Local_First-6ba3c9?style=flat-square" alt="Local-First" />
+  <img src="https://img.shields.io/badge/Outreach-Human_Controlled-8a7ec9?style=flat-square" alt="Human-Controlled Outreach" />
+  <img src="https://img.shields.io/badge/No_Mass_Outreach-Yes-e06b6b?style=flat-square" alt="No Mass Outreach" />
+</p>
 
 ---
 
-**MIT License** · **Open Source** · **Public GitHub Data Only** · **Local-first** · **Human-controlled Outreach** · **No Private Scraping**
-
----
-
-## Product
-
-UserScout helps you go from "My project needs users" to "I know who might need it, why they're relevant, and how to reach them."
-
-![Landing page](screenshots/screenshot-landing.png)
-
-### Discovery
-
-Find public evidence connected to your project's problem space.
-
-![Discovery](screenshots/screenshot-discovery.png)
-
-### Prospect Profile
-
-See why someone is relevant, with evidence you can verify.
-
-![Prospect Profile](screenshots/screenshot-prospect.png)
-
----
-
-## Why UserScout?
+## What UserScout Does
 
 Most developer tools help you build. UserScout helps you answer the harder question: **"Who actually needs this?"**
 
-- **Evidence, not guesses** — Find public activity connected to the problem you solve.
-- **Quality over quantity** — Prioritize stronger opportunities instead of generating huge lead lists.
-- **Transparent scoring** — Every score has an explainable signal breakdown.
-- **Human-controlled outreach** — UserScout helps with research and context. You write and send the message yourself.
+Point UserScout at a public GitHub repository and it finds people with public evidence of caring about the problem your project solves.
 
 ---
 
-## How it works
+## Key Features
+
+### Discover
+
+Find people through public GitHub activity: open issues asking about the problem, related repos they maintain, projects they contribute to.
+
+### Verify
+
+Every prospect comes with evidence you can inspect. No black-box scores. Links to the exact public activity behind each signal.
+
+### Prioritize
+
+Transparent relevance scoring with strong-signal weighting. Technology overlap alone never creates a high-confidence prospect.
+
+### Human Outreach
+
+UserScout helps with research and context. You write the message and send it yourself. No automation, no mass messaging.
+
+---
+
+## Product Screenshots
+
+![Landing page](screenshots/screenshot-landing.png)
+
+*Landing page — the public entry point.*
+
+![Discovery](screenshots/screenshot-discovery.png)
+
+*Discovery — find public evidence connected to your project's problem space.*
+
+![Prospect Profile](screenshots/screenshot-prospect.png)
+
+*Prospect profile — see why someone is relevant, with evidence you can verify.*
+
+---
+
+## How It Works
 
 1. **Add a public GitHub project**
 2. **Analyze** the problem space and target audience
@@ -60,17 +81,7 @@ Most developer tools help you build. UserScout helps you answer the harder quest
 
 ---
 
-## Tech stack
-
-- React 18 + TypeScript
-- Vite + Tailwind CSS
-- React Router hash routing
-- GitHub REST API (public data only)
-- Browser `localStorage` (local-first)
-
----
-
-## Quick start
+## Quick Start
 
 ```bash
 npm install
@@ -79,7 +90,15 @@ npm run build      # production build → dist/
 npm run typecheck  # strict TypeScript check
 ```
 
-Create a workspace account (stored locally, PBKDF2-hashed), add your repo, run discovery, save prospects, and work them through the outreach pipeline.
+---
+
+## Tech Stack
+
+- React 18 + TypeScript
+- Vite + Tailwind CSS
+- React Router hash routing
+- GitHub REST API (public data only)
+- Browser `localStorage` (local-first)
 
 ---
 
@@ -107,7 +126,7 @@ src/
 
 ---
 
-## Scoring model (deterministic & documented)
+## Scoring Model
 
 | Signal                       | Max | Rule                                                                                                      |
 | ---------------------------- | --- | --------------------------------------------------------------------------------------------------------- |
@@ -118,12 +137,12 @@ src/
 | Recent activity              | 15  | ≤30d: 15 · ≤90d: 10 · ≤180d: 6 · ≤1y: 3. *Weak*                                                           |
 | Audience alignment           | 8   | Bio/topics align with derived audience. *Weak*                                                            |
 
-- **Weak signals alone can never exceed 43/100.** "Uses Python" is context, not intent.
+- Weak signals alone can never exceed 43/100. "Uses Python" is context, not intent.
 - Same evidence in → same score out. No randomness, no black box.
 
 ---
 
-## GitHub integration & security
+## GitHub Integration & Security
 
 - **Official API only**, over HTTPS, fixed host `api.github.com`
 - **SSRF-safe:** repo input validated against `github.com` with strict regex
@@ -134,14 +153,14 @@ src/
 
 ---
 
-## Hard limits — what UserScout will NOT do
+## Hard Limits — What UserScout Will NOT Do
 
-- ❌ Automatic mass emails or bulk messaging
-- ❌ Automated outreach campaigns / sequences
-- ❌ Scraping private information or bypassing auth
-- ❌ Collecting unnecessary personal data
-- ❌ Inventing statistics
-- ❌ Guessing personal contact information
+- Automatic mass emails or bulk messaging
+- Automated outreach campaigns or sequences
+- Scraping private information or bypassing authentication
+- Collecting unnecessary personal data
+- Inventing statistics or metrics
+- Guessing personal contact information
 
 The human developer writes every message and presses send themselves. UserScout provides *context for personalized outreach*, nothing more.
 
@@ -157,7 +176,7 @@ npm run build
 
 ---
 
-## Known limitations (honest list)
+## Known Limitations
 
 1. **Local-first** — data lives in `localStorage` on one device
 2. **Client-side auth is a demonstration** — not a production security boundary
