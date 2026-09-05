@@ -1,4 +1,4 @@
-/* Domain widgets: score dial, signal breakdown, radar, funnel, console. */
+﻿/* Domain widgets: score dial, signal breakdown, radar, funnel, console. */
 
 import { useState, type ReactNode } from "react";
 import type { DiscoveryProgress, Evidence, RateInfo, Signal } from "../core/types";
@@ -60,7 +60,7 @@ export function SignalBreakdown({ signals, compact }: { signals: Signal[]; compa
           {!compact &&
             s.evidence.map((e, i) => (
               <p key={i} className="mt-1.5 text-[12px] leading-relaxed text-fog-400">
-                <span className="text-fog-500">↳ </span>
+                <span className="text-fog-500">â†³ </span>
                 {e.url ? (
                   <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-tide-400 underline-offset-2 hover:underline">
                     {e.text}
@@ -79,9 +79,10 @@ export function SignalBreakdown({ signals, compact }: { signals: Signal[]; compa
 
 export function EvidenceRow({ e }: { e: Evidence }) {
   const kindTone = { issue: "amber", repo: "teal", contribution: "green", profile: "fog" } as const;
+  const kindLabel = { issue: "discussion", repo: "related repo", contribution: "contribution", profile: "profile" } as const;
   return (
     <li className="flex items-start gap-2.5 border-b border-pine-700/60 px-1 py-2.5 last:border-b-0">
-      <Badge tone={kindTone[e.kind]} className="mt-px shrink-0 uppercase font-mono text-[9px]">{e.kind}</Badge>
+      <Badge tone={kindTone[e.kind]} className="mt-px shrink-0 uppercase font-mono text-[9px]">{kindLabel[e.kind]}</Badge>
       <div className="min-w-0 text-[13px] leading-relaxed text-fog-200">
         {e.text}
         {e.url && (
@@ -94,7 +95,7 @@ export function EvidenceRow({ e }: { e: Evidence }) {
   );
 }
 
-/* ── Radar (decorative, ambient) ── */
+/* â”€â”€ Radar (decorative, ambient) â”€â”€ */
 
 export function Radar({ active, size = 168, blips = 3 }: { active?: boolean; size?: number; blips?: number }) {
   const blipPos = [
@@ -131,7 +132,7 @@ export function Radar({ active, size = 168, blips = 3 }: { active?: boolean; siz
   );
 }
 
-/* ── Funnel ── */
+/* â”€â”€ Funnel â”€â”€ */
 
 export function FunnelViz({ stages }: { stages: { id: string; label: string; count: number; rate: number | null }[] }) {
   const max = Math.max(1, stages[0]?.count ?? 1);
@@ -154,7 +155,7 @@ export function FunnelViz({ stages }: { stages: { id: string; label: string; cou
   );
 }
 
-/* ── Rate-limit chip ── */
+/* â”€â”€ Rate-limit chip â”€â”€ */
 
 export function RateChip({ rate }: { rate: RateInfo }) {
   const search = rate.searchRemaining;
@@ -170,12 +171,12 @@ export function RateChip({ rate }: { rate: RateInfo }) {
       title="GitHub API requests remaining (unauthenticated: 60/h core, 10/min search)"
     >
       <span className={cx("size-1.5 rounded-full", low ? "bg-ember-400" : "bg-leaf-400 pulse-dot")} />
-      GH {core ?? "–"}·S {search ?? "–"}
+      GH {core ?? "â€“"}Â·S {search ?? "â€“"}
     </span>
   );
 }
 
-/* ── Copy button with feedback ── */
+/* â”€â”€ Copy button with feedback â”€â”€ */
 
 export function CopyButton({ text, label = "Copy", size = "md" }: { text: string; label?: string; size?: "sm" | "md" }) {
   const [copied, setCopied] = useState(false);
@@ -198,7 +199,7 @@ export function CopyButton({ text, label = "Copy", size = "md" }: { text: string
   );
 }
 
-/* ── Avatar with graceful fallback ── */
+/* â”€â”€ Avatar with graceful fallback â”€â”€ */
 
 export function Avatar({ url, login, size = 36 }: { url: string; login: string; size?: number }) {
   const [err, setErr] = useState(false);
@@ -214,7 +215,7 @@ export function Avatar({ url, login, size = 36 }: { url: string; login: string; 
   );
 }
 
-/* ── Discovery console log ── */
+/* â”€â”€ Discovery console log â”€â”€ */
 
 export function ConsoleLog({ lines, className }: { lines: DiscoveryProgress[]; className?: string }) {
   return (
@@ -225,20 +226,20 @@ export function ConsoleLog({ lines, className }: { lines: DiscoveryProgress[]; c
           <span className={l.status === "err" ? "text-ember-400" : "text-fog-300"}>
             <span className="text-fog-500">$ </span>
             {l.message}
-            {l.status === "run" && <span className="cursor-blink text-signal-400">▌</span>}
+            {l.status === "run" && <span className="cursor-blink text-signal-400">â–Œ</span>}
           </span>
         </div>
       ))}
       {!lines.length && (
         <div className="text-fog-500">
-          <span className="text-fog-500">$ </span>awaiting discovery run…<span className="cursor-blink text-signal-400">▌</span>
+          <span className="text-fog-500">$ </span>awaiting discovery runâ€¦<span className="cursor-blink text-signal-400">â–Œ</span>
         </div>
       )}
     </div>
   );
 }
 
-/* ── Stat block ── */
+/* â”€â”€ Stat block â”€â”€ */
 
 export function Stat({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
   return (
@@ -252,3 +253,4 @@ export function Stat({ label, value, accent }: { label: string; value: ReactNode
 export function Chip({ children }: { children: ReactNode }) {
   return <span className="inline-flex rounded border border-pine-600 bg-pine-800/70 px-2 py-0.5 font-mono text-[11px] text-fog-300">{children}</span>;
 }
+

@@ -1,12 +1,12 @@
 /* Auth — local accounts, PBKDF2-hashed passwords, honest about scope. */
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useWorkspace } from "../state/store";
 import { AppError } from "../core/utils";
 import { Button, Field, Input } from "../components/ui";
 import { Logo } from "../components/layout";
-import { ILock, IShield } from "../components/icons";
+import { IArrowL, ILock, IShield } from "../components/icons";
 import { cx } from "../core/utils";
 
 export default function AuthPage() {
@@ -55,6 +55,9 @@ export default function AuthPage() {
 
   return (
     <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
+      <Link to="/" className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[12.5px] font-medium text-fog-400 hover:bg-pine-800 hover:text-signal-300 md:left-6 md:top-6">
+        <IArrowL size={13} /> Back to UserScout
+      </Link>
       <div className="w-full max-w-[400px]">
         <div className="mb-7 flex flex-col items-center gap-3">
           <Logo size="lg" />

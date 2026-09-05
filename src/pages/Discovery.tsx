@@ -185,7 +185,10 @@ export default function Discovery() {
                     return (
                       <li key={r.candidate.login} className="reveal rounded-lg border border-pine-700/80 bg-pine-900/70 transition-colors hover:border-pine-600" style={{ animationDelay: `${idx * 50}ms` }}>
                           <div className="flex flex-wrap items-start gap-3.5 p-4 sm:gap-4">
-                          <ScoreDial score={r.score} size={68} />
+                          <div className="flex shrink-0 flex-col items-center justify-center rounded-md border border-pine-700 bg-pine-950/50 px-3 py-2" style={{ width: 68 }}>
+                            <span className="font-display text-[20px] font-bold leading-none text-fog-100">{r.score}</span>
+                            <span className="mt-0.5 font-mono text-[8px] uppercase tracking-wider text-fog-500">relevance</span>
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <Avatar url={r.candidate.avatarUrl} login={r.candidate.login} size={24} />
@@ -259,5 +262,6 @@ export default function Discovery() {
     </>
   );
 }
+
 
 
