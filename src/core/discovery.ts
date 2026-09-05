@@ -1,12 +1,12 @@
-/* ── Discovery engine ───────────────────────────────────────────────────
+﻿/* â”€â”€ Discovery engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * Finds candidate people from *public* GitHub activity only, attaching
  * concrete evidence to every candidate. Sources, in strength order:
  *
- *   1. issues   — people publicly asking about / discussing the problem
- *   2. repos    — maintainers of repos whose name/description/topics match
+ *   1. issues   â€” people publicly asking about / discussing the problem
+ *   2. repos    â€” maintainers of repos whose name/description/topics match
  *                 the project's query terms
- *   3. contribs — contributors to the closest related repos
- *   4. profiles — public profile enrichment for the top candidates
+ *   3. contribs â€” contributors to the closest related repos
+ *   4. profiles â€” public profile enrichment for the top candidates
  *
  * The engine never emails, messages, or contacts anyone. It returns a
  * ranked, explained list; a human decides everything after that.
@@ -27,13 +27,13 @@ export function buildSearchPlan(profile: ProjectProfile): DiscoveryStep[] {
       id: "issues",
       label: "Public problem evidence",
       kind: "issues",
-      detail: `Search open issues mentioning “${terms.slice(0, 2).join("”, “")}” — people actively discussing this problem.`,
+      detail: `Search open issues mentioning â€œ${terms.slice(0, 2).join("â€, â€œ")}â€ â€” people actively discussing this problem.`,
     },
     {
       id: "repos",
       label: "Related project maintainers",
       kind: "repos",
-      detail: `Search recently updated repos matching “${t0}” by name, description or README.`,
+      detail: `Search recently updated repos matching â€œ${t0}â€ by name, description or README.`,
     },
   ];
   if (profile.topics.length) {
@@ -41,7 +41,7 @@ export function buildSearchPlan(profile: ProjectProfile): DiscoveryStep[] {
       id: "topic-repos",
       label: "Topic neighbours",
       kind: "repos",
-      detail: `Search repos tagged “${profile.topics[0]}” — the project's own topic vocabulary.`,
+      detail: `Search repos tagged â€œ${profile.topics[0]}â€ â€” the project's own topic vocabulary.`,
     });
   }
   steps.push({
@@ -90,6 +90,7 @@ export async function runDiscovery(
         isAsking: false,
         languages: [],
         repoTopics: [],
+        contactChannels: [],
       };
       map.set(login, c);
     }
@@ -98,8 +99,8 @@ export async function runDiscovery(
 
   const excluded = (login: string) => !login || BOT_RE.test(login) || login.toLowerCase() === profile.owner.toLowerCase();
 
-  /* ── 1 · issues: strongest intent signal ── */
-  onProgress({ stepId: "issues", status: "run", message: `Searching open issues for “${terms.slice(0, 2).join("” OR “")}”…` });
+  /* â”€â”€ 1 Â· issues: strongest intent signal â”€â”€ */
+  onProgress({ stepId: "issues", status: "run", message: `Searching open issues for â€œ${terms.slice(0, 2).join("â€ OR â€œ")}â€â€¦` });
   try {
     const q = `${terms.slice(0, 2).map((t) => `"${t}"`).join(" OR ")} type:issue is:open`;
     const items = await client.searchIssues(q, 20);
@@ -115,8 +116,8 @@ export async function runDiscovery(
       c.evidences.push({
         kind: "issue",
         text: asking
-          ? `Asked “${it.title}” in ${repoFull} (${timeish(created)}).`
-          : `Discussed “${it.title}” in ${repoFull} (${timeish(created)}).`,
+          ? `Asked â€œ${it.title}â€ in ${repoFull} (${timeish(created)}).`
+          : `Discussed â€œ${it.title}â€ in ${repoFull} (${timeish(created)}).`,
         url: it.html_url,
         at: created,
       });
@@ -135,16 +136,16 @@ export async function runDiscovery(
   }
   await sleep(700);
 
-  /* ── 2 · repos: maintainers of related projects ── */
+  /* â”€â”€ 2 Â· repos: maintainers of related projects â”€â”€ */
   const repoQueries: Array<{ id: string; q: string; label: string }> = [
-    { id: "repos", q: `${terms[0] ?? profile.repo} in:name,description,readme`, label: `repos matching “${terms[0] ?? profile.repo}”` },
+    { id: "repos", q: `${terms[0] ?? profile.repo} in:name,description,readme`, label: `repos matching â€œ${terms[0] ?? profile.repo}â€` },
   ];
-  if (profile.topics[0]) repoQueries.push({ id: "topic-repos", q: `topic:${profile.topics[0]}`, label: `repos tagged “${profile.topics[0]}”` });
+  if (profile.topics[0]) repoQueries.push({ id: "topic-repos", q: `topic:${profile.topics[0]}`, label: `repos tagged â€œ${profile.topics[0]}â€` });
 
   const relatedPool: Array<{ ref: RepoRef; stars: number }> = [];
 
   for (const rq of repoQueries) {
-    onProgress({ stepId: rq.id, status: "run", message: `Searching ${rq.label}…` });
+    onProgress({ stepId: rq.id, status: "run", message: `Searching ${rq.label}â€¦` });
     try {
       const items = await client.searchRepos(rq.q, 15);
       let kept = 0;
@@ -156,7 +157,7 @@ export async function runDiscovery(
         const c = get(login);
         c.evidences.push({
           kind: "repo",
-          text: `Maintains ${r.full_name}${r.description ? ` — “${truncate(r.description, 90)}”` : ""} (${r.stargazers_count}★).`,
+          text: `Maintains ${r.full_name}${r.description ? ` â€” â€œ${truncate(r.description, 90)}â€` : ""} (${r.stargazers_count}â˜…).`,
           url: r.html_url,
           at: new Date(r.pushed_at).getTime(),
         });
@@ -177,8 +178,8 @@ export async function runDiscovery(
     await sleep(700);
   }
 
-  /* ── 3 · contributors to the closest related repos ── */
-  onProgress({ stepId: "contributors", status: "run", message: "Fetching contributors of the 2 closest related repos…" });
+  /* â”€â”€ 3 Â· contributors to the closest related repos â”€â”€ */
+  onProgress({ stepId: "contributors", status: "run", message: "Fetching contributors of the 2 closest related reposâ€¦" });
   try {
     const top = [...relatedPool]
       .filter((r, i) => relatedPool.findIndex((x) => x.ref.fullName === r.ref.fullName) === i)
@@ -202,13 +203,13 @@ export async function runDiscovery(
     if (e instanceof GitHubApiError && e.rateLimited) throw e;
   }
 
-  /* ── rank, then enrich only the top candidates ── */
+  /* â”€â”€ rank, then enrich only the top candidates â”€â”€ */
   const ranked = [...map.values()]
     .map((c) => scoreCandidate(profile, c))
     .sort((a, b) => b.score - a.score || a.candidate.login.localeCompare(b.candidate.login))
     .slice(0, 12);
 
-  onProgress({ stepId: "profiles", status: "run", message: `Enriching public profiles of top ${ranked.length} candidates…` });
+  onProgress({ stepId: "profiles", status: "run", message: `Enriching public profiles of top ${ranked.length} candidatesâ€¦` });
   let enriched = 0;
   for (const s of ranked) {
     try {
@@ -216,9 +217,53 @@ export async function runDiscovery(
       s.candidate.name = u.name ?? "";
       s.candidate.bio = u.bio ?? "";
       s.candidate.avatarUrl = u.avatar_url || s.candidate.avatarUrl;
+      s.candidate.company = u.company ?? undefined;
+      s.candidate.location = u.location ?? undefined;
+      s.candidate.twitterUsername = u.twitter_username ?? undefined;
+      s.candidate.websiteUrl = u.blog ?? undefined;
+      
+      // Build contact channels from public info
+      const channels: import("./types").ContactChannel[] = [];
+      channels.push({
+        type: "github",
+        value: `@${s.candidate.login}`,
+        url: s.candidate.htmlUrl,
+        source: "github-profile",
+        verified: true,
+        available: true,
+      });
+      if (u.blog) {
+        channels.push({
+          type: "website",
+          value: u.blog.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+          url: u.blog.startsWith("http") ? u.blog : `https://${u.blog}`,
+          source: "github-profile",
+          verified: true,
+          available: true,
+        });
+      }
+      if (u.twitter_username) {
+        channels.push({
+          type: "twitter",
+          value: `@${u.twitter_username}`,
+          url: `https://twitter.com/${u.twitter_username}`,
+          source: "github-profile",
+          verified: true,
+          available: true,
+        });
+      }
+      s.candidate.contactChannels = channels;
       enriched++;
     } catch {
       /* profile fetch is best-effort; candidate stays valid without it */
+      s.candidate.contactChannels = [{
+        type: "github",
+        value: `@${s.candidate.login}`,
+        url: s.candidate.htmlUrl,
+        source: "github-profile",
+        verified: true,
+        available: true,
+      }];
     }
     await sleep(250);
   }
@@ -235,7 +280,7 @@ function matchedTerms(r: { name: string; description: string | null; topics?: st
 }
 
 function truncate(s: string, n: number): string {
-  return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+  return s.length > n ? `${s.slice(0, n - 1).trimEnd()}â€¦` : s;
 }
 
 function timeish(ts: number): string {
@@ -246,3 +291,4 @@ function timeish(ts: number): string {
 function errMsg(e: unknown): string {
   return e instanceof Error ? e.message : "Unexpected error.";
 }
+

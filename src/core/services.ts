@@ -1,5 +1,5 @@
-/* ── Business logic / services ──────────────────────────────────────────
- * All mutations and ownership checks live here — never in route handlers
+﻿/* â”€â”€ Business logic / services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * All mutations and ownership checks live here â€” never in route handlers
  * or components. Every read/write of a private resource verifies
  * resource.ownerId === actorId (IDOR protection). Throws AppError with
  * stable codes the UI maps to friendly states.
@@ -31,7 +31,7 @@ function assertOwner(resourceOwnerId: string, actorId: string, what: string) {
   }
 }
 
-/* ═══ Auth ═══════════════════════════════════════════════════════════ */
+/* â•â•â• Auth â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export class AuthService {
   constructor(private db: StorageAdapter) {}
@@ -39,7 +39,7 @@ export class AuthService {
   async register(usernameRaw: string, password: string): Promise<{ user: SafeUser; token: string }> {
     const username = usernameRaw.trim().toLowerCase();
     if (!/^[a-z0-9_-]{3,24}$/.test(username)) {
-      throw new AppError("validation", "Username: 3–24 chars, letters, digits, '-' or '_'.");
+      throw new AppError("validation", "Username: 3â€“24 chars, letters, digits, '-' or '_'.");
     }
     if (password.length < 8) throw new AppError("validation", "Password must be at least 8 characters.");
     const users = this.db.read<UserRecord>("users");
@@ -95,7 +95,7 @@ export class AuthService {
   }
 }
 
-/* ═══ Projects ═══════════════════════════════════════════════════════ */
+/* â•â•â• Projects â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export class ProjectService {
   constructor(private db: StorageAdapter) {}
@@ -146,7 +146,7 @@ export class ProjectService {
   }
 }
 
-/* ═══ Prospects ══════════════════════════════════════════════════════ */
+/* â•â•â• Prospects â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export class ProspectService {
   constructor(private db: StorageAdapter) {}
@@ -181,6 +181,22 @@ export class ProspectService {
         existing.name = s.candidate.name || existing.name;
         existing.bio = s.candidate.bio || existing.bio;
         existing.avatarUrl = s.candidate.avatarUrl || existing.avatarUrl;
+        existing.contactChannels = s.candidate.contactChannels || existing.contactChannels || [{
+          type: "github",
+          value: `@${s.candidate.login}`,
+          url: s.candidate.htmlUrl,
+          source: "github-profile",
+          verified: true,
+          available: true,
+        }];
+        existing.context = {
+          relevantRepos: [...new Set([...(existing.context?.relevantRepos || []), ...(s.candidate.relatedRepos || [])])],
+          languages: [...new Set([...(existing.context?.languages || []), ...(s.candidate.languages || [])])],
+          technologies: [...new Set([...(existing.context?.technologies || []), ...(s.candidate.repoTopics || [])])],
+        };
+        existing.cautionSignals = buildCautionSignals(s);
+        existing.lastActivityAt = s.candidate.lastActivityAt || existing.lastActivityAt;
+        existing.recommendedAction = recommendAction(s);
         updated++;
       } else {
         const p: Prospect = {
@@ -204,9 +220,25 @@ export class ProspectService {
           repliedAt: null,
           convertedAt: null,
           archived: false,
+          contactChannels: s.candidate.contactChannels || [{
+            type: "github",
+            value: `@${s.candidate.login}`,
+            url: s.candidate.htmlUrl,
+            source: "github-profile",
+            verified: true,
+            available: true,
+          }],
+          context: {
+            relevantRepos: s.candidate.relatedRepos || [],
+            languages: s.candidate.languages || [],
+            technologies: s.candidate.repoTopics || [],
+          },
+          cautionSignals: buildCautionSignals(s),
+          lastActivityAt: s.candidate.lastActivityAt || null,
+          recommendedAction: recommendAction(s),
         };
         all.push(p);
-        newEvents.push(this.event(p, "created", `Saved from discovery — score ${s.score}/100 (${s.confidence} confidence).`));
+        newEvents.push(this.event(p, "created", `Saved from discovery â€” score ${s.score}/100 (${s.confidence} confidence).`));
         created++;
       }
     }
@@ -272,7 +304,7 @@ export class ProspectService {
       p.convertedAt = null;
     }
 
-    const ev = this.event(p, "status", opts.note || `Status: ${statusLabel(from)} → ${statusLabel(to)}`, { from, to, channel: opts.channel });
+    const ev = this.event(p, "status", opts.note || `Status: ${statusLabel(from)} â†’ ${statusLabel(to)}`, { from, to, channel: opts.channel });
     const events = [...this.db.read<TimelineEvent>("events"), ev];
     this.db.write("prospects", all);
     this.db.write("events", events);
@@ -303,7 +335,7 @@ export class ProspectService {
   }
 }
 
-/* ═══ Drafts (outreach messages are composed, never sent) ════════════ */
+/* â•â•â• Drafts (outreach messages are composed, never sent) â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export class DraftService {
   constructor(private db: StorageAdapter, private prospects: ProspectService) {}
@@ -325,7 +357,7 @@ export class DraftService {
   }
 }
 
-/* ═══ Feedback ═══════════════════════════════════════════════════════ */
+/* â•â•â• Feedback â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export class FeedbackService {
   constructor(private db: StorageAdapter, private prospects: ProspectService) {}
@@ -365,7 +397,7 @@ export class FeedbackService {
       projectId: p.projectId,
       ownerId: actorId,
       type: "feedback",
-      message: `Feedback logged: ${"★".repeat(input.rating)}${"☆".repeat(5 - input.rating)} · would use again: ${input.wouldUseAgain}`,
+      message: `Feedback logged: ${"â˜…".repeat(input.rating)}${"â˜†".repeat(5 - input.rating)} Â· would use again: ${input.wouldUseAgain}`,
       at: Date.now(),
     };
     this.db.write("events", [...this.db.read<TimelineEvent>("events"), ev]);
@@ -373,7 +405,7 @@ export class FeedbackService {
     let events = this.db.read<TimelineEvent>("events");
     let prospect = p;
     if (["saved", "contacted", "replied", "tried"].includes(p.status)) {
-      const r = this.prospects.setStatus(actorId, prospectId, "feedback", { note: `Status: ${statusLabel(p.status)} → Feedback received (after feedback logged)` });
+      const r = this.prospects.setStatus(actorId, prospectId, "feedback", { note: `Status: ${statusLabel(p.status)} â†’ Feedback received (after feedback logged)` });
       events = r.events;
       prospect = r.prospect;
     }
@@ -381,7 +413,7 @@ export class FeedbackService {
   }
 }
 
-/* ═══ Funnel metrics — computed from real rows only ══════════════════ */
+/* â•â•â• Funnel metrics â€” computed from real rows only â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export interface FunnelStage {
   id: string;
@@ -413,7 +445,7 @@ export function computeFunnel(prospects: Prospect[]): { stages: FunnelStage[]; n
   };
 }
 
-/* ═══ Community index (opt-in, public repo data + usernames only) ════ */
+/* â•â•â• Community index (opt-in, public repo data + usernames only) â•â•â•â• */
 
 export interface CommunityListing {
   project: Project;
@@ -436,4 +468,40 @@ export function listDiscoverable(db: StorageAdapter, actorId: string | null): Co
       mine: project.ownerId === actorId,
     }))
     .sort((a, b) => b.project.profile.stars - a.project.profile.stars);
+}
+
+
+/* ── Phase 1 helpers ── */
+
+function buildCautionSignals(s: ScoredCandidate): import("./types").CautionSignal[] {
+  const cautions: import("./types").CautionSignal[] = [];
+  const hasStrongSignal = s.signals.some((sig) => ["asking", "maintainer", "contributor"].includes(sig.id));
+  
+  if (!hasStrongSignal) {
+    cautions.push({ type: "weak_evidence", message: "No strong problem-related evidence found. Technology overlap only." });
+  }
+  
+  if (!s.candidate.lastActivityAt || Date.now() - s.candidate.lastActivityAt > 180 * 86400000) {
+    cautions.push({ type: "no_recent_activity", message: "No relevant public activity in the last 6 months." });
+  } else if (Date.now() - s.candidate.lastActivityAt > 90 * 86400000) {
+    cautions.push({ type: "old_evidence", message: "Most recent relevant activity is over 3 months old." });
+  }
+  
+  const strongSignals = s.signals.filter((sig) => ["asking", "maintainer", "contributor"].includes(sig.id));
+  if (strongSignals.length === 0) {
+    cautions.push({ type: "tech_only", message: "Only technology overlap found - weak signal for actual need." });
+  }
+  
+  return cautions;
+}
+
+function recommendAction(s: ScoredCandidate): string {
+  const hasStrong = s.confidence === "high" || (s.confidence === "medium" && s.score >= 60);
+  const hasRecent = s.candidate.lastActivityAt && Date.now() - s.candidate.lastActivityAt < 90 * 86400000;
+  const hasGithub = s.candidate.contactChannels?.some((c) => c.type === "github");
+  
+  if (hasStrong && hasRecent && hasGithub) return "Contact via GitHub";
+  if (hasStrong && !hasRecent) return "Save for later";
+  if (!hasStrong && hasRecent) return "Review before contacting";
+  return "Review before contacting";
 }

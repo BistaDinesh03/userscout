@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { parseRepoInput } from "./github";
 import { scoreCandidate } from "./scoring";
 import { ProjectService } from "./services";
 import type { Collection, StorageAdapter } from "./storage";
-import type { DiscoveryCandidate, ProjectProfile } from "./types";
+import type { DiscoveryCandidate, ProjectProfile, ContactChannel } from "./types";
 
 const profile: ProjectProfile = {
   fullName: "owner/tool",
@@ -42,6 +42,7 @@ const candidate = (overrides: Partial<DiscoveryCandidate> = {}): DiscoveryCandid
   isAsking: false,
   languages: [],
   repoTopics: [],
+  contactChannels: [],
   ...overrides,
 });
 
@@ -71,6 +72,23 @@ describe("scoreCandidate", () => {
     const result = scoreCandidate(profile, candidate({ languages: ["Python"], repoTopics: ["discovery"] }));
     expect(result.score).toBeLessThanOrEqual(43);
     expect(result.confidence).toBe("low");
+  });
+
+  it("preserves contact channels from candidate", () => {
+    const channels: ContactChannel[] = [{
+      type: "github",
+      value: "@person",
+      url: "https://github.com/person",
+      source: "github-profile",
+      verified: true,
+      available: true,
+    }];
+    const c = candidate({ contactChannels: channels });
+    expect(c.contactChannels).toHaveLength(1);
+    expect(c.contactChannels[0].type).toBe("github");
+    const result = scoreCandidate(profile, c);
+    expect(result.candidate.contactChannels).toHaveLength(1);
+    expect(result.candidate.contactChannels[0].type).toBe("github");
   });
 });
 

@@ -1,4 +1,4 @@
-/* ── UserScout domain model ─────────────────────────────────────────────
+﻿/* ── UserScout domain model ─────────────────────────────────────────────────
  * Pure domain types shared by storage, services, and the UI.
  * No personal data beyond what is already public on GitHub is modeled.
  */
@@ -96,6 +96,30 @@ export type ProspectStatus =
   | "not_interested"
   | "archived";
 
+export type ContactChannelType = "github" | "linkedin" | "website" | "email" | "twitter";
+
+export interface ContactChannel {
+  type: ContactChannelType;
+  value: string;
+  url?: string;
+  source: string;
+  verified: boolean;
+  available: boolean;
+}
+
+export interface CautionSignal {
+  type: "no_recent_activity" | "weak_evidence" | "old_evidence" | "tech_only" | "duplicate_evidence";
+  message: string;
+}
+
+export interface ProspectContext {
+  mainRole?: string;
+  relevantRepos: string[];
+  languages: string[];
+  technologies: string[];
+  recentActivity?: string;
+}
+
 export interface Prospect {
   id: ID;
   projectId: ID;
@@ -117,6 +141,12 @@ export interface Prospect {
   repliedAt: number | null;
   convertedAt: number | null;
   archived: boolean;
+  /* Phase 1 additions */
+  contactChannels: ContactChannel[];
+  context: ProspectContext;
+  cautionSignals: CautionSignal[];
+  lastActivityAt: number | null;
+  recommendedAction: string;
 }
 
 export type TimelineType = "created" | "status" | "note" | "draft" | "feedback";
@@ -175,6 +205,12 @@ export interface DiscoveryCandidate {
   isAsking: boolean;
   languages: string[];
   repoTopics: string[];
+  /* Phase 1 additions */
+  contactChannels: ContactChannel[];
+  company?: string;
+  location?: string;
+  twitterUsername?: string;
+  websiteUrl?: string;
 }
 
 export interface ScoredCandidate {

@@ -1,4 +1,4 @@
-/* Prospect detail — evidence, outreach timeline, notes, draft, feedback.
+﻿/* Prospect detail — evidence, outreach timeline, notes, draft, feedback.
  * Nothing here sends a message. Humans decide, humans write, humans send. */
 
 import { useMemo, useState } from "react";
@@ -8,7 +8,7 @@ import { STATUSES, statusLabel } from "../core/types";
 import { useWorkspace } from "../state/store";
 import { PageHead } from "../components/layout";
 import { Avatar, CopyButton, EvidenceRow, ScoreDial, SignalBreakdown } from "../components/bits";
-import { IAlert, IArrowL, ICheck, IClock, IExt, IFlag, IInbox, INote, ISend, IStar, ITerminal, IUsers } from "../components/icons";
+import { IAlert, IArrowL, ICheck, IClock, IExt, IFlag, IInbox, INote, ISend, IStar, ITerminal, IUsers, IGlobe, IMail } from "../components/icons";
 import { Badge, Button, ConfidenceBadge, EmptyState, Field, Select, StatusPill, Textarea } from "../components/ui";
 import { cx, formatDate, formatClock, timeAgo } from "../core/utils";
 
@@ -75,6 +75,9 @@ export default function ProspectDetail() {
   };
 
   const next = NEXT_STEP[prospect.status];
+  const contactChannels = prospect.contactChannels || [];
+  const cautionSignals = prospect.cautionSignals || [];
+  const context = prospect.context;
 
   return (
     <>
@@ -93,6 +96,9 @@ export default function ProspectDetail() {
                 {prospect.login} <IExt size={13} className="text-fog-500" />
               </a>
               <ConfidenceBadge c={prospect.confidence} />
+              {prospect.recommendedAction && (
+                <Badge tone="teal" className="font-mono">{prospect.recommendedAction}</Badge>
+              )}
             </div>
             <div className="mt-1 font-mono text-[10.5px] text-fog-500">
               first seen {timeAgo(prospect.firstSeenAt)} · sources: {prospect.sources.join(", ")}
@@ -122,13 +128,96 @@ export default function ProspectDetail() {
             <SignalBreakdown signals={prospect.signals} />
           </section>
 
+          {/* Contact channels */}
           <section className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
-            <h2 className="mb-3 font-display text-[15px] font-bold">Evidence ({prospect.signals.reduce((n, s) => n + s.evidence.length, 0)})</h2>
+            <h2 className="mb-3 flex items-center gap-2 font-display text-[15px] font-bold"><IGlobe size={14} className="text-signal-400" /> Contact channels</h2>
+            {contactChannels.length === 0 ? (
+              <p className="text-[12.5px] text-fog-500">No public contact channels discovered.</p>
+            ) : (
+              <ul className="space-y-2">
+                {contactChannels.map((ch, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-md border border-pine-700 bg-pine-950/50 px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Badge tone="fog" className="uppercase font-mono text-[9px]">{ch.type}</Badge>
+                        {ch.verified && <Badge tone="green" className="font-mono text-[9px]">verified</Badge>}
+                      </div>
+                      <div className="mt-1 truncate text-[12.5px] text-fog-200">{ch.value}</div>
+                    </div>
+                    <div className="flex shrink-0 gap-1.5">
+                      {ch.url && (
+                        <a href={ch.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-pine-600 bg-pine-800/60 px-2 text-[11px] text-fog-300 hover:border-signal-500/60 hover:text-signal-300">
+                          <IExt size={11} /> Open
+                        </a>
+                      )}
+                      <CopyButton text={ch.value} label="Copy" size="sm" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Context */}
+          {context && (context.relevantRepos.length > 0 || context.languages.length > 0 || context.technologies.length > 0) && (
+            <section className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
+              <h2 className="mb-3 font-display text-[15px] font-bold">Context</h2>
+              {context.relevantRepos.length > 0 && (
+                <div className="mb-3">
+                  <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-fog-500">Relevant repositories</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {context.relevantRepos.map((repo) => (
+                      <Badge key={repo} tone="teal" className="font-mono">{repo}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {context.languages.length > 0 && (
+                <div className="mb-3">
+                  <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-fog-500">Languages</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {context.languages.map((lang) => (
+                      <Badge key={lang} tone="fog">{lang}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {context.technologies.length > 0 && (
+                <div>
+                  <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-fog-500">Technologies</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {context.technologies.slice(0, 8).map((tech) => (
+                      <Badge key={tech} tone="pine" className="font-mono">{tech}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Evidence timeline */}
+          <section className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
+            <h2 className="mb-3 font-display text-[15px] font-bold">Evidence timeline</h2>
             <ul className="space-y-2">
               {prospect.signals.flatMap((s) => s.evidence).map((e, i) => <EvidenceRow key={i} e={e} />)}
             </ul>
             <p className="mt-3 font-mono text-[10px] leading-relaxed text-fog-500">Every item links to public GitHub activity. Verify before you write — personalization beats volume.</p>
           </section>
+
+          {/* Caution signals */}
+          {cautionSignals.length > 0 && (
+            <section className="rounded-lg border border-ember-500/30 bg-ember-500/5 p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-[15px] font-bold text-ember-400"><IAlert size={14} /> Things to consider</h2>
+              <ul className="space-y-2">
+                {cautionSignals.map((c, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-fog-300">
+                    <span className="mt-1 size-1.5 shrink-0 rounded-full bg-ember-400" />
+                    {c.message}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         {/* RIGHT — outreach workspace */}
@@ -288,3 +377,4 @@ export default function ProspectDetail() {
     </>
   );
 }
+
