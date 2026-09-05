@@ -53,19 +53,18 @@ export default function ProspectDetail() {
     .slice(0, 3);
 
   const buildTemplate = () => {
-    const name = prospect.name ? ` (${prospect.name})` : "";
+    const firstName = prospect.name ? prospect.name.split(" ")[0].trim() : prospect.login;
+    const mainEvidence = evidenceLines[0] ?? "";
+    
+    // Keep it short and specific - no meta commentary
     const lines = [
-      `Hi @${prospect.login}${name},`,
+      `Hey ${firstName},`,
       ``,
-      `I'm building ${project.profile.fullName}${project.profile.description ? ` — ${project.profile.description.toLowerCase().replace(/\.$/, "")}` : ""}.`,
-      `I found your profile while looking for people genuinely close to this problem:`,
+      `I found ${mainEvidence.toLowerCase().replace(/\.$/, "")}.`,
       ``,
-      ...evidenceLines.map((e) => `• ${e}`),
-      ``,
-      `If this is still a live problem for you, I'd value a brutally honest first impression. No follow-up cadence, no drip sequence — one human asking another.`,
-      ``,
-      `— ${user?.username ?? "me"}`,
+      `I'm working on ${project.profile.fullName} which tackles a similar space. Would love your thoughts if you have a minute.`,
     ];
+    
     return lines.join("\n");
   };
 
@@ -377,4 +376,6 @@ export default function ProspectDetail() {
     </>
   );
 }
+
+
 

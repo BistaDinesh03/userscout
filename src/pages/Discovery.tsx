@@ -1,4 +1,4 @@
-/* Discovery — run evidence-based searches, review, save. No automation. */
+﻿/* Discovery â€” run evidence-based searches, review, save. No automation. */
 
 import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -48,7 +48,7 @@ export default function Discovery() {
     setRunning(true);
     setFatal(null);
     setResults(null);
-    setLines([{ stepId: "start", status: "run", message: `Scouting users for ${project.profile.fullName} — ${formatClock(Date.now())}` }]);
+    setLines([{ stepId: "start", status: "run", message: `Scouting users for ${project.profile.fullName} â€” ${formatClock(Date.now())}` }]);
     try {
       const res = await runDiscovery(gh, project.profile, {
         onProgress: addLine,
@@ -58,7 +58,7 @@ export default function Discovery() {
       });
       if (runId.current === my) {
         setResults(res);
-        addLine({ stepId: "end", status: "ok", message: `Done — ${res.length} candidates ranked by evidence. Save the ones worth a personal message.` });
+        addLine({ stepId: "end", status: "ok", message: `Done â€” ${res.length} candidates ranked by evidence. Save the ones worth a personal message.` });
       }
     } catch (err) {
       if (runId.current !== my) return;
@@ -80,7 +80,7 @@ export default function Discovery() {
     if (!results) return;
     const top = results.filter((r) => r.score >= 45).slice(0, 5);
     if (!top.length) {
-      toast("info", "Nothing above 45/100 — saving weak leads goes against the philosophy.");
+      toast("info", "Nothing above 45/100 â€” saving weak leads goes against the philosophy.");
       return;
     }
     const r = saveDiscovery(project.id, top);
@@ -89,7 +89,7 @@ export default function Discovery() {
       top.forEach((t) => n.add(t.candidate.login.toLowerCase()));
       return n;
     });
-    toast("ok", `${r.created} saved · ${r.updated} refreshed.`);
+    toast("ok", `${r.created} saved Â· ${r.updated} refreshed.`);
   };
 
   const strongCount = results?.filter((r) => r.confidence !== "low").length ?? 0;
@@ -97,7 +97,7 @@ export default function Discovery() {
   return (
     <>
       <PageHead
-        title={`Scout · ${project.profile.fullName}`}
+        title={`Scout Â· ${project.profile.fullName}`}
         sub="Public signals only. Every candidate below comes with receipts."
         right={
           <>
@@ -136,7 +136,7 @@ export default function Discovery() {
               <IRadar size={14} /> {results ? "Run again" : "Start scouting"}
             </Button>
             <p className="mt-2.5 text-center font-mono text-[9.5px] leading-relaxed text-fog-500">
-              paced for GitHub rate limits · ~15 public API calls
+              paced for GitHub rate limits Â· ~15 public API calls
             </p>
           </section>
 
@@ -166,17 +166,17 @@ export default function Discovery() {
             <>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[13px] text-fog-400">
-                  <strong className="text-fog-100">{results.length}</strong> candidates ·{" "}
+                  <strong className="text-fog-100">{results.length}</strong> candidates Â·{" "}
                   <strong className={strongCount ? "text-leaf-300" : "text-fog-100"}>{strongCount}</strong> with strong-signal confidence
                 </p>
                 <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-                  <Button size="sm" variant="outline" onClick={saveTop}><IUsers size={13} /> Save strong leads (≥45)</Button>
-                  <Link to={`/app/projects/${project.id}`}><Button size="sm" variant="ghost">View saved →</Button></Link>
+                  <Button size="sm" variant="outline" onClick={saveTop}><IUsers size={13} /> Save strong leads (â‰¥45)</Button>
+                  <Link to={`/app/projects/${project.id}`}><Button size="sm" variant="ghost">View saved â†’</Button></Link>
                 </div>
               </div>
 
               {results.length === 0 ? (
-                <EmptyState icon={<IUsers size={20} />} title="No candidates with evidence" body="Nobody matching the query terms surfaced in public search right now. Check the repo has a clear description and topics — discovery quality follows analysis quality." />
+                <EmptyState icon={<IUsers size={20} />} title="No candidates with evidence" body="Nobody matching the query terms surfaced in public search right now. Check the repo has a clear description and topics â€” discovery quality follows analysis quality." />
               ) : (
                 <ul className="space-y-3">
                   {results.map((r, idx) => {
@@ -200,7 +200,7 @@ export default function Discovery() {
                               {r.explanation}
                             </p>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              {r.candidate.sources.map((s) => <Chip key={s}>{s}</Chip>)}
+                              {r.candidate.sources.filter((s, i, arr) => arr.indexOf(s) === i).slice(0, 2).map((s) => <Chip key={s}>{s.replace("public-issues", "discussion").replace("topic-repos", "related repo")}</Chip>)}
                               <button onClick={() => setExpanded(open ? null : r.candidate.login)} aria-expanded={open} className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10.5px] text-fog-400 hover:text-signal-300">
                                 evidence <IChevronD size={11} className={cx("transition-transform", open && "rotate-180")} />
                               </button>
@@ -212,7 +212,7 @@ export default function Discovery() {
                             ) : (
                               <Button size="sm" variant="outline" onClick={() => saveOne(r)} disabled={running}>Save prospect</Button>
                             )}
-                            <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">rank #{idx + 1}</span>
+                            <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">score {r.score}</span>
                           </div>
                         </div>
                         {open && (
@@ -251,11 +251,13 @@ export default function Discovery() {
             </div>
           ))}
           <p className="pt-2 text-[11.5px] leading-relaxed text-fog-500">
-            Signals sum, capped at 100. Confidence: HIGH = score ≥70 with a strong signal ≥20 pts · MEDIUM = score ≥45 or any strong signal · else LOW.
-            Weak-only candidates can never exceed 43. Same evidence in → same score out.
+            Signals sum, capped at 100. Confidence: HIGH = score â‰¥70 with a strong signal â‰¥20 pts Â· MEDIUM = score â‰¥45 or any strong signal Â· else LOW.
+            Weak-only candidates can never exceed 43. Same evidence in â†’ same score out.
           </p>
         </div>
       </Modal>
     </>
   );
 }
+
+
