@@ -45,11 +45,11 @@ export default function ProjectNew() {
     }
   };
 
-  const save = () => {
+  const save = async () => {
     if (!profile) return;
     setSaving(true);
     try {
-      const p = createProject(profile);
+      const p = await createProject(profile);
       toast("ok", `${profile.fullName} added. Ready to scout for users.`);
       nav(`/app/projects/${p.id}`);
     } catch (err) {

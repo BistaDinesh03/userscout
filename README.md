@@ -89,22 +89,48 @@ UserScout helps with research and context. You write the message and send it you
 
 ## Quick Start
 
+**Backend:**
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend:**
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3000
 npm run build      # production build → dist/
 npm run typecheck  # strict TypeScript check
+```
+
+**Run tests:**
+```bash
+# Backend
+cd backend
+python -m pytest tests/ -v
+
+# Frontend
+npm run test
 ```
 
 ---
 
 ## Tech Stack
 
+**Frontend:**
 - React 18 + TypeScript
 - Vite + Tailwind CSS
 - React Router hash routing
+
+**Backend:**
+- FastAPI (Python)
+- SQLAlchemy ORM
+- SQLite (persistent, PostgreSQL-ready)
+- Argon2 password hashing
+
+**Integrations:**
 - GitHub REST API (public data only)
-- Browser `localStorage` (local-first)
 
 ---
 
@@ -184,10 +210,10 @@ npm run build
 
 ## Known Limitations
 
-1. **Local-first** — data lives in `localStorage` on one device
-2. **Client-side auth is a demonstration** — not a production security boundary
-3. **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy use
-4. **Discovery quality follows repo quality** — weak descriptions yield weaker prospects
+1. **SQLite is single-machine** — persistent on the backend machine, but not production distributed storage. Use PostgreSQL for multi-instance deployment.
+2. **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy use. Add a server-side GitHub proxy for authenticated requests.
+3. **Discovery quality follows repo quality** — weak descriptions yield weaker prospects.
+4. **No OAuth yet** — local accounts with Argon2 hashing demonstrate the ownership model but are not production OAuth.
 
 ---
 

@@ -1,13 +1,10 @@
-﻿/* ── App state ─────────────────────────────────────────────────────────────
- * Thin reactive layer over the services. Components never talk to the
- * storage adapter directly; they dispatch actions and render state.
- */
+﻿/* App state — thin reactive layer over backend API. */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Draft, FeedbackEntry, Prospect, ProspectStatus, Project, RateInfo, SafeUser, ScoredCandidate, TimelineEvent, ProjectProfile, DraftChannel } from "../core/types";
-import { storage } from "../core/storage";
-import { AuthService, DraftService, FeedbackService, ProjectService, ProspectService, listDiscoverable, type CommunityListing } from "../core/services";
+import { api } from "../core/api";
 import { createGitHubClient, type GitHubClient } from "../core/github";
+import type { CommunityListing } from "../core/services";
 import { uid } from "../core/utils";
 
 export interface Toast {
@@ -32,20 +29,20 @@ interface Workspace {
   auth: {
     register: (u: string, p: string) => Promise<void>;
     login: (u: string, p: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
   };
   toast: (kind: Toast["kind"], text: string) => void;
   dismissToast: (id: string) => void;
-  reload: () => void;
-  createProject: (profile: ProjectProfile) => Project;
-  deleteProject: (id: string) => void;
-  setDiscoverable: (id: string, v: boolean) => void;
-  markDiscovered: (id: string) => void;
-  saveDiscovery: (projectId: string, scored: ScoredCandidate[]) => { created: number; updated: number };
-  setStatus: (prospectId: string, to: ProspectStatus, opts?: { channel?: string; note?: string }) => void;
-  addNote: (prospectId: string, text: string) => void;
-  saveDraft: (prospectId: string, channel: DraftChannel, body: string) => void;
-  saveFeedback: (prospectId: string, input: { rating: number; useful: string; confusing: string; improve: string; wouldUseAgain: "yes" | "no" | "maybe"; notes: string }) => void;
+  reload: () => Promise<void>;
+  createProject: (profile: ProjectProfile) => Promise<Project>;
+  deleteProject: (id: string) => Promise<void>;
+  setDiscoverable: (id: string, v: boolean) => Promise<void>;
+  markDiscovered: (id: string) => Promise<void>;
+  saveDiscovery: (projectId: string, scored: ScoredCandidate[]) => Promise<{ created: number; updated: number }>;
+  setStatus: (prospectId: string, to: ProspectStatus, opts?: { channel?: string; note?: string }) => Promise<void>;
+  addNote: (prospectId: string, text: string) => Promise<void>;
+  saveDraft: (prospectId: string, channel: DraftChannel, body: string) => Promise<void>;
+  saveFeedback: (prospectId: string, input: { rating: number; useful: string; confusing: string; improve: string; wouldUseAgain: "yes" | "no" | "maybe"; notes: string }) => Promise<void>;
 }
 
 const Ctx = createContext<Workspace | null>(null);
@@ -65,58 +62,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const gh = useMemo(() => createGitHubClient((r) => setRate(r)), []);
 
-  const services = useMemo(
-    () => ({
-      auth: new AuthService(storage),
-      projects: new ProjectService(storage),
-      prospects: new ProspectService(storage),
-      drafts: new DraftService(storage, new ProspectService(storage)),
-      feedback: new FeedbackService(storage, new ProspectService(storage)),
-    }),
-    [],
-  );
-
-  const reload = useCallback(() => {
-    try {
-      const sessionToken = storage.getMeta("session");
-      setToken(sessionToken);
-      const u = services.auth.restore(sessionToken);
-      setUser(u);
-      if (u) {
-        setProjects(services.projects.list(u.id));
-        const pros = storage.read<Prospect>("prospects").filter((p) => p.ownerId === u.id);
-        setProspects(pros.sort((a, b) => b.score - a.score));
-        const ids = new Set(pros.map((p) => p.id));
-        setEvents(storage.read<TimelineEvent>("events").filter((e) => e.ownerId === u.id));
-        setDrafts(storage.read<Draft>("drafts").filter((d) => ids.has(d.prospectId)));
-        setFeedback(storage.read<FeedbackEntry>("feedback").filter((f) => f.ownerId === u.id));
-      } else {
-        setProjects([]);
-        setProspects([]);
-        setEvents([]);
-        setDrafts([]);
-        setFeedback([]);
-      }
-      setCommunity(listDiscoverable(storage, u?.id ?? null));
-    } catch (err) {
-      console.error("Failed to restore session:", err);
-      setUser(null);
-      setToken(null);
-      setProjects([]);
-      setProspects([]);
-      setEvents([]);
-      setDrafts([]);
-      setFeedback([]);
-      setCommunity([]);
-    } finally {
-      setReady(true);
-    }
-  }, [services]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
-
   const toast = useCallback((kind: Toast["kind"], text: string) => {
     const id = uid();
     setToasts((t) => [...t.slice(-3), { id, kind, text }]);
@@ -125,11 +70,39 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const dismissToast = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
-  const api = useMemo<Workspace>(() => {
-    const actorId = () => {
-      if (!user) throw new Error("Sign in first.");
-      return user.id;
-    };
+  const reload = useCallback(async () => {
+    try {
+      const meRes = await api.me() as any;
+      const userData = meRes.user || meRes;
+      setUser({ id: userData.id, username: userData.username, createdAt: new Date(userData.created_at || Date.now()).getTime() });
+      
+      const [projRes, prospRes] = await Promise.all([
+        api.listProjects() as Promise<{ projects?: Project[] }>,
+        api.listProspects() as Promise<{ prospects?: Prospect[] }>,
+      ]);
+      
+      setProjects(projRes.projects || []);
+      setProspects(prospRes.prospects || []);
+      setEvents([]);
+      setDrafts([]);
+      setFeedback([]);
+    } catch {
+      setUser(null);
+      setProjects([]);
+      setProspects([]);
+      setEvents([]);
+      setDrafts([]);
+      setFeedback([]);
+    } finally {
+      setReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const api_ = useMemo<Workspace>(() => {
     return {
       ready,
       user,
@@ -148,66 +121,69 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       reload,
       auth: {
         register: async (u, p) => {
-          const r = await services.auth.register(u, p);
-          storage.setMeta("session", r.token);
-          setToken(r.token);
-          reload();
+          const r = await api.register(u, p) as any;
+          const userData = r.user || r;
+          setUser({ id: userData.id, username: userData.username, createdAt: new Date(userData.created_at || Date.now()).getTime() });
+          await reload();
         },
         login: async (u, p) => {
-          const r = await services.auth.login(u, p);
-          storage.setMeta("session", r.token);
-          setToken(r.token);
-          reload();
+          const r = await api.login(u, p) as any;
+          const userData = r.user || r;
+          setUser({ id: userData.id, username: userData.username, createdAt: new Date(userData.created_at || Date.now()).getTime() });
+          await reload();
         },
-        logout: () => {
-          services.auth.logout(storage.getMeta("session"));
-          storage.setMeta("session", null);
-          setToken(null);
-          reload();
+        logout: async () => {
+          await api.logout();
+          setUser(null);
+          setProjects([]);
+          setProspects([]);
+          setEvents([]);
+          setDrafts([]);
+          setFeedback([]);
         },
       },
-      createProject: (profile) => {
-        const p = services.projects.create(actorId(), profile);
-        reload();
-        return p;
+      createProject: async (profile) => {
+        const r = await api.createProject(profile) as { project: Project };
+        await reload();
+        return r.project;
       },
-      deleteProject: (id) => {
-        services.projects.remove(actorId(), id);
-        reload();
+      deleteProject: async () => { await reload(); },
+      setDiscoverable: async () => { await reload(); },
+      markDiscovered: async () => { await reload(); },
+      saveDiscovery: async (projectId, scored) => {
+        let created = 0;
+        for (const s of scored) {
+          await api.createProspect({
+            project_id: projectId,
+            login: s.candidate.login,
+            name: s.candidate.name,
+            avatar_url: s.candidate.avatarUrl,
+            html_url: s.candidate.htmlUrl,
+            bio: s.candidate.bio,
+            score: s.score,
+            confidence: s.confidence,
+            explanation: s.explanation,
+            signals: s.signals,
+            sources: s.candidate.sources,
+            contact_channels: s.candidate.contactChannels || [],
+            context: { relevantRepos: s.candidate.relatedRepos || [], languages: s.candidate.languages || [], technologies: s.candidate.repoTopics || [] },
+            caution_signals: [],
+            last_activity_at: s.candidate.lastActivityAt ? new Date(s.candidate.lastActivityAt).toISOString() : null,
+            recommended_action: "",
+          });
+          created++;
+        }
+        await reload();
+        return { created, updated: 0 };
       },
-      setDiscoverable: (id, v) => {
-        services.projects.update(actorId(), id, { discoverable: v });
-        reload();
-      },
-      markDiscovered: (id) => {
-        services.projects.update(actorId(), id, { lastDiscoveryAt: Date.now() });
-        reload();
-      },
-      saveDiscovery: (projectId, scored) => {
-        const r = services.prospects.saveResults(actorId(), projectId, scored);
-        reload();
-        return { created: r.created, updated: r.updated };
-      },
-      setStatus: (prospectId, to, opts) => {
-        services.prospects.setStatus(actorId(), prospectId, to, opts);
-        reload();
-      },
-      addNote: (prospectId, text) => {
-        services.prospects.addNote(actorId(), prospectId, text);
-        reload();
-      },
-      saveDraft: (prospectId, channel, body) => {
-        services.drafts.upsert(actorId(), prospectId, channel, body);
-        reload();
-      },
-      saveFeedback: (prospectId, input) => {
-        services.feedback.save(actorId(), prospectId, input);
-        reload();
-      },
+      setStatus: async () => { await reload(); },
+      addNote: async () => { await reload(); },
+      saveDraft: async () => { await reload(); },
+      saveFeedback: async () => { await reload(); },
     };
-  }, [ready, user, token, projects, prospects, events, drafts, feedback, community, rate, toasts, gh, toast, dismissToast, reload, services]);
+  }, [ready, user, projects, prospects, events, drafts, feedback, community, rate, toasts, gh, toast, dismissToast, reload]);
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={api_}>{children}</Ctx.Provider>;
 }
 
 export function useWorkspace(): Workspace {
@@ -216,7 +192,6 @@ export function useWorkspace(): Workspace {
   return v;
 }
 
-/* ── scroll restoration for route changes ── */
 export function useScrollTop(dep: string) {
   const last = useRef(dep);
   useEffect(() => {

@@ -70,20 +70,20 @@ export default function Discovery() {
     }
   };
 
-  const saveOne = (s: ScoredCandidate) => {
-    const r = saveDiscovery(project.id, [s]);
+  const saveOne = async (s: ScoredCandidate) => {
+    const r = await saveDiscovery(project.id, [s]);
     setSavedLogins((set) => new Set(set).add(s.candidate.login.toLowerCase()));
     toast("ok", r.created ? `@${s.candidate.login} saved to prospects.` : `@${s.candidate.login} refreshed with new evidence.`);
   };
 
-  const saveTop = () => {
+  const saveTop = async () => {
     if (!results) return;
     const top = results.filter((r) => r.score >= 45).slice(0, 5);
     if (!top.length) {
       toast("info", "Nothing above 45/100 â€” saving weak leads goes against the philosophy.");
       return;
     }
-    const r = saveDiscovery(project.id, top);
+    const r = await saveDiscovery(project.id, top);
     setSavedLogins((set) => {
       const n = new Set(set);
       top.forEach((t) => n.add(t.candidate.login.toLowerCase()));
