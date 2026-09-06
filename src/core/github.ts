@@ -1,4 +1,4 @@
-﻿/* â”€â”€ GitHub integration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ── GitHub integration ─────────────────────────────────────────────────
  * Only the official GitHub REST API is used, over HTTPS, against a fixed
  * host (api.github.com). Repository owner/name are extracted with a strict
  * allow-list regex before being interpolated into paths, so arbitrary URLs
@@ -173,7 +173,7 @@ export function createGitHubClient(onRate?: (r: RateInfo) => void): GitHubClient
       onRate?.({ ...rate });
     }
 
-    if (res.status === 404) throw new GitHubApiError(404, "Repository not found. Check the URL â€” the repo must be public.");
+    if (res.status === 404) throw new GitHubApiError(404, "Repository not found. Check the URL — the repo must be public.");
     if (res.status === 403 || res.status === 429) {
       if (remaining === 0) {
         throw new GitHubApiError(res.status, rateLimitMessage(isSearch, reset * 1000), true, reset * 1000);
@@ -225,7 +225,7 @@ export function createGitHubClient(onRate?: (r: RateInfo) => void): GitHubClient
 function rateLimitMessage(isSearch: boolean, resetMs: number): string {
   const when = resetMs ? `resets ${new Date(resetMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "try again shortly";
   return isSearch
-    ? `GitHub search rate limit reached (10/min unauthenticated) â€” ${when}.`
-    : `GitHub API rate limit reached (60/h unauthenticated) â€” ${when}. Add VITE_GITHUB_TOKEN for higher limits.`;
+    ? `GitHub search rate limit reached (10/min unauthenticated) — ${when}.`
+    : `GitHub API rate limit reached (60/h unauthenticated) — ${when}. Add VITE_GITHUB_TOKEN for higher limits.`;
 }
 

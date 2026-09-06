@@ -1,4 +1,4 @@
-﻿/* Domain widgets: score dial, signal breakdown, radar, funnel, console. */
+/* Domain widgets: score dial, signal breakdown, radar, funnel, console. */
 
 import { useState, type ReactNode } from "react";
 import type { DiscoveryProgress, Evidence, RateInfo, Signal } from "../core/types";
@@ -60,7 +60,7 @@ export function SignalBreakdown({ signals, compact }: { signals: Signal[]; compa
           {!compact &&
             s.evidence.map((e, i) => (
               <p key={i} className="mt-1.5 text-[12px] leading-relaxed text-fog-400">
-                <span className="text-fog-500">â†³ </span>
+                <span className="text-fog-500">←³ </span>
                 {e.url ? (
                   <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-tide-400 underline-offset-2 hover:underline">
                     {e.text}
@@ -95,7 +95,7 @@ export function EvidenceRow({ e }: { e: Evidence }) {
   );
 }
 
-/* â”€â”€ Radar (decorative, ambient) â”€â”€ */
+/* ── Radar (decorative, ambient) ── */
 
 export function Radar({ active, size = 168, blips = 3 }: { active?: boolean; size?: number; blips?: number }) {
   const blipPos = [
@@ -132,7 +132,7 @@ export function Radar({ active, size = 168, blips = 3 }: { active?: boolean; siz
   );
 }
 
-/* â”€â”€ Funnel â”€â”€ */
+/* ── Funnel ── */
 
 export function FunnelViz({ stages }: { stages: { id: string; label: string; count: number; rate: number | null }[] }) {
   const max = Math.max(1, stages[0]?.count ?? 1);
@@ -155,7 +155,7 @@ export function FunnelViz({ stages }: { stages: { id: string; label: string; cou
   );
 }
 
-/* â”€â”€ Rate-limit chip â”€â”€ */
+/* ── Rate-limit chip ── */
 
 export function RateChip({ rate }: { rate: RateInfo }) {
   const search = rate.searchRemaining;
@@ -171,12 +171,12 @@ export function RateChip({ rate }: { rate: RateInfo }) {
       title="GitHub API requests remaining (unauthenticated: 60/h core, 10/min search)"
     >
       <span className={cx("size-1.5 rounded-full", low ? "bg-ember-400" : "bg-leaf-400 pulse-dot")} />
-      GH {core ?? "â€“"}Â·S {search ?? "â€“"}
+      GH {core ?? "–"}·S {search ?? "–"}
     </span>
   );
 }
 
-/* â”€â”€ Copy button with feedback â”€â”€ */
+/* ── Copy button with feedback ── */
 
 export function CopyButton({ text, label = "Copy", size = "md" }: { text: string; label?: string; size?: "sm" | "md" }) {
   const [copied, setCopied] = useState(false);
@@ -199,7 +199,7 @@ export function CopyButton({ text, label = "Copy", size = "md" }: { text: string
   );
 }
 
-/* â”€â”€ Avatar with graceful fallback â”€â”€ */
+/* ── Avatar with graceful fallback ── */
 
 export function Avatar({ url, login, size = 36 }: { url: string; login: string; size?: number }) {
   const [err, setErr] = useState(false);
@@ -215,7 +215,7 @@ export function Avatar({ url, login, size = 36 }: { url: string; login: string; 
   );
 }
 
-/* â”€â”€ Discovery console log â”€â”€ */
+/* ── Discovery console log ── */
 
 export function ConsoleLog({ lines, className }: { lines: DiscoveryProgress[]; className?: string }) {
   return (
@@ -226,20 +226,20 @@ export function ConsoleLog({ lines, className }: { lines: DiscoveryProgress[]; c
           <span className={l.status === "err" ? "text-ember-400" : "text-fog-300"}>
             <span className="text-fog-500">$ </span>
             {l.message}
-            {l.status === "run" && <span className="cursor-blink text-signal-400">â–Œ</span>}
+            {l.status === "run" && <span className="cursor-blink text-signal-400">▌</span>}
           </span>
         </div>
       ))}
       {!lines.length && (
         <div className="text-fog-500">
-          <span className="text-fog-500">$ </span>awaiting discovery runâ€¦<span className="cursor-blink text-signal-400">â–Œ</span>
+          <span className="text-fog-500">$ </span>awaiting discovery run…<span className="cursor-blink text-signal-400">▌</span>
         </div>
       )}
     </div>
   );
 }
 
-/* â”€â”€ Stat block â”€â”€ */
+/* ── Stat block ── */
 
 export function Stat({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
   return (

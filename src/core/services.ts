@@ -1,5 +1,5 @@
-﻿/* â”€â”€ Business logic / services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- * All mutations and ownership checks live here â€” never in route handlers
+/* ── Business logic / services ──────────────────────────────────────────
+ * All mutations and ownership checks live here — never in route handlers
  * or components. Every read/write of a private resource verifies
  * resource.ownerId === actorId (IDOR protection). Throws AppError with
  * stable codes the UI maps to friendly states.
@@ -31,7 +31,7 @@ function assertOwner(resourceOwnerId: string, actorId: string, what: string) {
   }
 }
 
-/* â•â•â• Auth â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Auth "•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"• */
 
 export class AuthService {
   constructor(private db: StorageAdapter) {}
@@ -39,7 +39,7 @@ export class AuthService {
   async register(usernameRaw: string, password: string): Promise<{ user: SafeUser; token: string }> {
     const username = usernameRaw.trim().toLowerCase();
     if (!/^[a-z0-9_-]{3,24}$/.test(username)) {
-      throw new AppError("validation", "Username: 3â€“24 chars, letters, digits, '-' or '_'.");
+      throw new AppError("validation", "Username: 3–24 chars, letters, digits, '-' or '_'.");
     }
     if (password.length < 8) throw new AppError("validation", "Password must be at least 8 characters.");
     const users = this.db.read<UserRecord>("users");
@@ -95,7 +95,7 @@ export class AuthService {
   }
 }
 
-/* â•â•â• Projects â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Projects "•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"• */
 
 export class ProjectService {
   constructor(private db: StorageAdapter) {}
@@ -146,7 +146,7 @@ export class ProjectService {
   }
 }
 
-/* â•â•â• Prospects â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Prospects "•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"• */
 
 export class ProspectService {
   constructor(private db: StorageAdapter) {}
@@ -238,7 +238,7 @@ export class ProspectService {
           recommendedAction: recommendAction(s),
         };
         all.push(p);
-        newEvents.push(this.event(p, "created", `Saved from discovery â€” score ${s.score}/100 (${s.confidence} confidence).`));
+        newEvents.push(this.event(p, "created", `Saved from discovery — score ${s.score}/100 (${s.confidence} confidence).`));
         created++;
       }
     }
@@ -304,7 +304,7 @@ export class ProspectService {
       p.convertedAt = null;
     }
 
-    const ev = this.event(p, "status", opts.note || `Status: ${statusLabel(from)} â†’ ${statusLabel(to)}`, { from, to, channel: opts.channel });
+    const ev = this.event(p, "status", opts.note || `Status: ${statusLabel(from)} ←’ ${statusLabel(to)}`, { from, to, channel: opts.channel });
     const events = [...this.db.read<TimelineEvent>("events"), ev];
     this.db.write("prospects", all);
     this.db.write("events", events);
@@ -335,7 +335,7 @@ export class ProspectService {
   }
 }
 
-/* â•â•â• Drafts (outreach messages are composed, never sent) â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Drafts (outreach messages are composed, never sent) "•"•"•"•"•"•"•"•"•"•"•"• */
 
 export class DraftService {
   constructor(private db: StorageAdapter, private prospects: ProspectService) {}
@@ -357,7 +357,7 @@ export class DraftService {
   }
 }
 
-/* â•â•â• Feedback â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Feedback "•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"• */
 
 export class FeedbackService {
   constructor(private db: StorageAdapter, private prospects: ProspectService) {}
@@ -397,7 +397,7 @@ export class FeedbackService {
       projectId: p.projectId,
       ownerId: actorId,
       type: "feedback",
-      message: `Feedback logged: ${"â˜…".repeat(input.rating)}${"â˜†".repeat(5 - input.rating)} Â· would use again: ${input.wouldUseAgain}`,
+      message: `Feedback logged: ${"★".repeat(input.rating)}${"☆".repeat(5 - input.rating)} · would use again: ${input.wouldUseAgain}`,
       at: Date.now(),
     };
     this.db.write("events", [...this.db.read<TimelineEvent>("events"), ev]);
@@ -405,7 +405,7 @@ export class FeedbackService {
     let events = this.db.read<TimelineEvent>("events");
     let prospect = p;
     if (["saved", "contacted", "replied", "tried"].includes(p.status)) {
-      const r = this.prospects.setStatus(actorId, prospectId, "feedback", { note: `Status: ${statusLabel(p.status)} â†’ Feedback received (after feedback logged)` });
+      const r = this.prospects.setStatus(actorId, prospectId, "feedback", { note: `Status: ${statusLabel(p.status)} ←’ Feedback received (after feedback logged)` });
       events = r.events;
       prospect = r.prospect;
     }
@@ -413,7 +413,7 @@ export class FeedbackService {
   }
 }
 
-/* â•â•â• Funnel metrics â€” computed from real rows only â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* "•"•"• Funnel metrics — computed from real rows only "•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"•"• */
 
 export interface FunnelStage {
   id: string;
@@ -445,7 +445,7 @@ export function computeFunnel(prospects: Prospect[]): { stages: FunnelStage[]; n
   };
 }
 
-/* â•â•â• Community index (opt-in, public repo data + usernames only) â•â•â•â• */
+/* "•"•"• Community index (opt-in, public repo data + usernames only) "•"•"•"• */
 
 export interface CommunityListing {
   project: Project;
