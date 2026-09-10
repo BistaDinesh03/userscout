@@ -17,7 +17,7 @@ const ROOT_FILES = import.meta.glob(
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
-const DOT_FILES = import.meta.glob(["/.env.example", "/.gitignore"], {
+const DOT_FILES = import.meta.glob(["/.gitignore"], {
   query: "?raw",
   import: "default",
   eager: true,

@@ -1,14 +1,11 @@
-/* ── UserScout domain model ─────────────────────────────────────────────
- * Pure domain types shared by storage, services, and the UI.
- * No personal data beyond what is already public on GitHub is modeled.
- */
+﻿/* UserScout domain model */
 
 export type ID = string;
 
 export interface UserRecord {
   id: ID;
   username: string;
-  passHash: string; // PBKDF2-SHA256, never plaintext
+  passHash: string;
   salt: string;
   createdAt: number;
 }
@@ -22,10 +19,10 @@ export interface SessionRecord {
   expiresAt: number;
 }
 
-/* ── Project analysis ── */
+/* Project analysis */
 
 export interface ProjectProfile {
-  fullName: string; // owner/repo
+  fullName: string;
   owner: string;
   repo: string;
   url: string;
@@ -39,7 +36,6 @@ export interface ProjectProfile {
   openIssues: number;
   license: string;
   readmeExcerpt: string;
-  /* derived (deterministic heuristics, documented in README) */
   keywords: string[];
   problemSpace: string[];
   audience: string[];
@@ -51,13 +47,13 @@ export interface Project {
   id: ID;
   ownerId: ID;
   profile: ProjectProfile;
-  discoverable: boolean; // opt-in to the local community index
+  discoverable: boolean;
   createdAt: number;
   updatedAt: number;
   lastDiscoveryAt: number | null;
 }
 
-/* ── Discovery / evidence ── */
+/* Discovery / evidence */
 
 export type EvidenceKind = "issue" | "repo" | "contribution" | "profile";
 
@@ -65,7 +61,7 @@ export interface Evidence {
   kind: EvidenceKind;
   text: string;
   url?: string;
-  at?: number; // when the activity happened (epoch ms)
+  at?: number;
 }
 
 export type SignalId =
@@ -96,6 +92,30 @@ export type ProspectStatus =
   | "not_interested"
   | "archived";
 
+export type ContactChannelType = "github" | "linkedin" | "website" | "email" | "twitter";
+
+export interface ContactChannel {
+  type: ContactChannelType;
+  value: string;
+  url?: string;
+  source: string;
+  verified: boolean;
+  available: boolean;
+}
+
+export interface CautionSignal {
+  type: "no_recent_activity" | "weak_evidence" | "old_evidence" | "tech_only" | "duplicate_evidence";
+  message: string;
+}
+
+export interface ProspectContext {
+  mainRole?: string;
+  relevantRepos: string[];
+  languages: string[];
+  technologies: string[];
+  recentActivity?: string;
+}
+
 export interface Prospect {
   id: ID;
   projectId: ID;
@@ -109,7 +129,7 @@ export interface Prospect {
   score: number;
   confidence: Confidence;
   explanation: string;
-  sources: string[]; // discovery queries that surfaced this person
+  sources: string[];
   firstSeenAt: number;
   status: ProspectStatus;
   contactedAt: number | null;
@@ -117,6 +137,11 @@ export interface Prospect {
   repliedAt: number | null;
   convertedAt: number | null;
   archived: boolean;
+  contactChannels: ContactChannel[];
+  context: ProspectContext;
+  cautionSignals: CautionSignal[];
+  lastActivityAt: number | null;
+  recommendedAction: string;
 }
 
 export type TimelineType = "created" | "status" | "note" | "draft" | "feedback";
@@ -149,7 +174,7 @@ export interface FeedbackEntry {
   prospectId: ID;
   projectId: ID;
   ownerId: ID;
-  rating: number; // 1..5
+  rating: number;
   useful: string;
   confusing: string;
   improve: string;
@@ -158,7 +183,7 @@ export interface FeedbackEntry {
   at: number;
 }
 
-/* ── Discovery runtime ── */
+/* Discovery runtime */
 
 export interface DiscoveryCandidate {
   login: string;
@@ -175,6 +200,11 @@ export interface DiscoveryCandidate {
   isAsking: boolean;
   languages: string[];
   repoTopics: string[];
+  contactChannels: ContactChannel[];
+  company?: string;
+  location?: string;
+  twitterUsername?: string;
+  websiteUrl?: string;
 }
 
 export interface ScoredCandidate {

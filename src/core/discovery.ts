@@ -73,7 +73,7 @@ export async function runDiscovery(
   const terms = profile.queryTerms;
 
   const get = (login: string): DiscoveryCandidate => {
-    let c = map.get(login);
+    let c = map.get(login)!;
     if (!c) {
       c = {
         login,
@@ -90,6 +90,7 @@ export async function runDiscovery(
         isAsking: false,
         languages: [],
         repoTopics: [],
+        contactChannels: [],
       };
       map.set(login, c);
     }

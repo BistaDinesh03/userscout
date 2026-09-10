@@ -74,11 +74,11 @@ function TopNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b border-pine-800/80 bg-pine-950/85 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
-        <a href="#top" aria-label="UserScout"><Logo /></a>
+        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="UserScout"><Logo /></button>
         <nav className="hidden items-center gap-6 text-[13px] text-fog-400 md:flex" aria-label="Landing sections">
-          <a className="hover:text-signal-300 transition-colors" href="#signals">Signal model</a>
-          <a className="hover:text-signal-300 transition-colors" href="#scoring">Scoring</a>
-          <a className="hover:text-signal-300 transition-colors" href="#ethics">Ethics</a>
+          <button type="button" onClick={() => document.getElementById("signals")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Signal model</button>
+          <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Scoring</button>
+          <button type="button" onClick={() => document.getElementById("ethics")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Ethics</button>
         </nav>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline-flex"><DownloadButton /></span>
@@ -161,9 +161,9 @@ function ScoutSection({ signedIn }: { signedIn: boolean }) {
           <Link to={signedIn ? "/app/projects/new" : "/auth?mode=register"}>
             <Button>Add your project <IArrowR size={14} /></Button>
           </Link>
-          <a href="#scoring" className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300">
+          <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300">
             How scoring works
-          </a>
+          </button>
         </div>
       </div>
 
@@ -451,9 +451,9 @@ function Footer() {
           <span className="font-mono text-[11px] text-fog-500">MIT licensed · open source</span>
         </div>
         <div className="flex items-center gap-5 text-[12px] text-fog-500">
-          <a href="#signals" className="hover:text-fog-200">Signals</a>
-          <a href="#scoring" className="hover:text-fog-200">Scoring</a>
-          <a href="#ethics" className="hover:text-fog-200">Ethics</a>
+          <button type="button" onClick={() => document.getElementById("signals")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Signals</button>
+          <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Scoring</button>
+          <button type="button" onClick={() => document.getElementById("ethics")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Ethics</button>
           <Link to="/auth" className="hover:text-fog-200">Workspace</Link>
         </div>
         <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">

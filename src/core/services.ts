@@ -204,6 +204,11 @@ export class ProspectService {
           repliedAt: null,
           convertedAt: null,
           archived: false,
+          contactChannels: [],
+          context: { relevantRepos: [], languages: [], technologies: [] },
+          cautionSignals: [],
+          lastActivityAt: null,
+          recommendedAction: "",
         };
         all.push(p);
         newEvents.push(this.event(p, "created", `Saved from discovery — score ${s.score}/100 (${s.confidence} confidence).`));

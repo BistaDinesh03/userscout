@@ -1,4 +1,4 @@
-/* Outreach workspace — the manual CRM across all projects. */
+﻿/* Outreach workspace — next actions across all projects. */
 
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,114 +8,300 @@ import { STATUSES, statusLabel } from "../core/types";
 import { useWorkspace } from "../state/store";
 import { PageHead } from "../components/layout";
 import { Avatar, FunnelViz } from "../components/bits";
-import { IArrowR, IInbox, IRadar, ISend } from "../components/icons";
+import { IArrowR, ICheck, IInbox, IRadar, ISend } from "../components/icons";
 import { Badge, Button, EmptyState, StatusPill } from "../components/ui";
 import { cx, timeAgo } from "../core/utils";
+
+type Filter = ProspectStatus | "active" | "all";
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: "active", label: "Active" },
+  { id: "saved", label: "Needs contact" },
+  { id: "contacted", label: "Contacted" },
+  { id: "replied", label: "Replied" },
+  { id: "tried", label: "Tried" },
+  { id: "feedback", label: "Feedback" },
+  { id: "user", label: "Users" },
+  { id: "not_interested", label: "Not interested" },
+  { id: "archived", label: "Archived" },
+];
 
 export default function Outreach() {
   const { prospects, projects, setStatus, toast } = useWorkspace();
   const nav = useNavigate();
-  const [filter, setFilter] = useState<ProspectStatus | "active">("active");
+  const [filter, setFilter] = useState<Filter>("active");
 
   const funnel = useMemo(() => computeFunnel(prospects), [prospects]);
   const projectName = (id: string) => projects.find((p) => p.id === id)?.profile.fullName ?? "deleted project";
 
+  const stats = useMemo(() => ({
+    needsAttention: prospects.filter((p) => p.status === "saved" && !p.archived).length,
+    contacted: prospects.filter((p) => p.status === "contacted").length,
+    replied: prospects.filter((p) => p.status === "replied").length,
+    feedback: prospects.filter((p) => p.status === "feedback").length,
+    users: prospects.filter((p) => p.status === "user").length,
+  }), [prospects]);
+
+  const activeList = useMemo(
+    () => prospects.filter((p) => !p.archived && p.status !== "not_interested"),
+    [prospects],
+  );
+
+  const nextToContact = useMemo(() => {
+    return [...activeList]
+      .filter((p) => p.status === "saved")
+      .sort((a, b) => {
+        // prioritize: higher score, then more recent activity
+        if (b.score !== a.score) return b.score - a.score;
+        return (b.lastActivityAt ?? 0) - (a.lastActivityAt ?? 0);
+      })
+      .slice(0, 5);
+  }, [activeList]);
+
   const list = useMemo(() => {
-    const base = prospects.filter((p) => (filter === "active" ? !p.archived && p.status !== "not_interested" : p.status === filter));
+    const base = prospects.filter((p) => {
+      if (filter === "all") return true;
+      if (filter === "active") return !p.archived && p.status !== "not_interested";
+      return p.status === filter;
+    });
     return base.sort((a, b) => b.score - a.score);
   }, [prospects, filter]);
 
+  const emptyTitle = prospects.length === 0
+    ? "Pipeline is empty"
+    : filter === "active"
+      ? "Nothing active right now"
+      : `Nothing in "${filter === "all" ? "All" : statusLabel(filter as ProspectStatus)}"`;
+
+  const emptyBody = prospects.length === 0
+    ? "Save prospects from a discovery run first. Only people with evidence belong here — quality over quantity."
+    : "People move through this pipeline from their detail page.";
+
   return (
     <>
-      <PageHead title="Outreach workspace" sub="Your pipeline, tracked by hand — because every message is personal or it's spam." />
+      <PageHead
+        title="Outreach"
+        sub="Turn your strongest opportunities into thoughtful conversations."
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div>
-          <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by status">
-            <FilterBtn active={filter === "active"} onClick={() => setFilter("active")} label={`Active · ${prospects.filter((p) => !p.archived && p.status !== "not_interested").length}`} />
-            {STATUSES.map((s) => {
-              const n = prospects.filter((p) => p.status === s.id).length;
-              return <FilterBtn key={s.id} active={filter === s.id} onClick={() => setFilter(s.id)} label={`${s.label} · ${n}`} />;
-            })}
-          </div>
-
-          {list.length === 0 ? (
-            <EmptyState
-              icon={<IInbox size={20} />}
-              title={prospects.length === 0 ? "Pipeline is empty" : `Nothing in “${filter === "active" ? "Active" : statusLabel(filter as ProspectStatus)}”`}
-              body={prospects.length === 0 ? "Save prospects from a discovery run first. Only people with evidence belong here — quality over quantity." : "People move through this pipeline from their detail page."}
-              action={prospects.length === 0 ? <Button onClick={() => nav("/app/projects")}><IRadar size={14} /> Scout a project</Button> : undefined}
-            />
-          ) : (
-            <ul className="space-y-2">
-              {list.map((p) => (
-                <li key={p.id} className="group flex flex-wrap items-center gap-3.5 rounded-md border border-pine-700/80 bg-pine-900/60 px-4 py-3 transition-all hover:border-pine-600 sm:flex-nowrap">
-                  <Avatar url={p.avatarUrl} login={p.login} size={34} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link to={`/app/prospects/${p.id}`} className="text-[14px] font-semibold text-fog-100 hover:text-signal-300">@{p.login}</Link>
-                      <StatusPill status={p.status} />
-                      <Badge tone="pine" className="font-mono">{projectName(p.projectId)}</Badge>
-                    </div>
-                    <p className="mt-0.5 truncate text-[11.5px] text-fog-500">{p.explanation}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <div className="text-right">
-                      <div className="font-display text-[16px] font-bold leading-none text-fog-100">{p.score}</div>
-                      <div className="font-mono text-[8.5px] uppercase tracking-wider text-fog-500">{p.confidence}</div>
-                    </div>
-                    <QuickAdvance status={p.status} onAdvance={(to) => { setStatus(p.id, to, { channel: to === "contacted" ? (p.contactChannel ?? "github") : undefined }); toast("ok", `@${p.login} → ${statusLabel(to)}`); }} />
-                    <Link to={`/app/prospects/${p.id}`} aria-label={`Open @${p.login}`} className="rounded-md border border-pine-600 p-2 text-fog-400 transition-colors hover:border-signal-500/60 hover:text-signal-300">
-                      <IArrowR size={13} />
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <aside className="space-y-4">
-          <section className="brackets rounded-lg border border-pine-600 bg-pine-900/80 p-5">
-            <h2 className="mb-3 font-display text-[14px] font-bold">Live funnel</h2>
-            {prospects.length === 0 ? (
-              <p className="text-[12px] leading-relaxed text-fog-500">Numbers appear once prospects exist. We never show rates we can't back with your records.</p>
-            ) : (
-              <>
-                <FunnelViz stages={funnel.stages} />
-                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-pine-700 pt-3 text-center">
-                  <div><div className="font-display text-[18px] font-bold text-ember-400">{funnel.notInterested}</div><div className="text-[9.5px] uppercase tracking-wider text-fog-500">not interested</div></div>
-                  <div><div className="font-display text-[18px] font-bold text-fog-300">{funnel.archived}</div><div className="text-[9.5px] uppercase tracking-wider text-fog-500">archived</div></div>
-                </div>
-              </>
-            )}
-          </section>
-          <section className="rounded-lg border border-pine-700/70 bg-pine-900/50 p-4">
-            <h3 className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-wider text-fog-400"><ISend size={12} /> outreach rules</h3>
-            <ul className="mt-2.5 space-y-1.5 text-[11.5px] leading-relaxed text-fog-500">
-              <li>· One personal message per person. Reference their evidence.</li>
-              <li>· No sequences, no automation, no "quick follow-up" nags.</li>
-              <li>· "Not interested" means never again — it's a permanent no.</li>
-            </ul>
-          </section>
-          {prospects.filter((p) => p.status === "saved").slice(0, 3).map((p) => (
-            <button key={p.id} onClick={() => nav(`/app/prospects/${p.id}`)} className="w-full rounded-md border border-pine-700 bg-pine-900/60 px-3.5 py-2.5 text-left transition-colors hover:border-signal-500/50">
-              <div className="flex items-center justify-between text-[11.5px]">
-                <span className="font-medium text-fog-200">@{p.login}</span>
-                <span className="font-mono text-[9.5px] uppercase text-fog-500">needs first contact</span>
-              </div>
-              <div className="mt-1 h-1 overflow-hidden rounded-full bg-pine-700"><div className="h-full bg-signal-500/70" style={{ width: `${p.score}%` }} /></div>
-            </button>
-          ))}
-        </aside>
+      {/* Stats row */}
+      <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <StatTile label="Needs attention" value={stats.needsAttention} accent={stats.needsAttention > 0} />
+        <StatTile label="Contacted" value={stats.contacted} />
+        <StatTile label="Replied" value={stats.replied} />
+        <StatTile label="Feedback" value={stats.feedback} />
+        <StatTile label="Users" value={stats.users} />
       </div>
+
+      {/* Next to contact */}
+      {nextToContact.length > 0 && (
+        <section className="mb-8">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="font-display text-[16px] font-bold text-fog-100">Next to contact</h2>
+            <span className="font-mono text-[10.5px] uppercase tracking-wider text-fog-500">
+              {nextToContact.length} {nextToContact.length === 1 ? "prospect" : "prospects"}
+            </span>
+          </div>
+          <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {nextToContact.map((p) => (
+              <li key={p.id}>
+                <NextCard
+                  prospect={p}
+                  projectName={projectName(p.projectId)}
+                  onOpen={() => nav(`/app/prospects/${p.id}`)}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by status">
+        {FILTERS.map((f) => {
+          const n = f.id === "all"
+            ? prospects.length
+            : f.id === "active"
+              ? activeList.length
+              : prospects.filter((p) => p.status === f.id).length;
+          return (
+            <FilterBtn
+              key={f.id}
+              active={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              label={`${f.label} · ${n}`}
+            />
+          );
+        })}
+      </div>
+
+      {/* All outreach list */}
+      {list.length === 0 ? (
+        <EmptyState
+          icon={<IInbox size={20} />}
+          title={emptyTitle}
+          body={emptyBody}
+          action={prospects.length === 0 ? <Button onClick={() => nav("/app/projects")}><IRadar size={14} /> Scout a project</Button> : undefined}
+        />
+      ) : (
+        <ul className="overflow-hidden rounded-lg border border-pine-700/80 bg-pine-900/40">
+          {list.map((p) => (
+            <li
+              key={p.id}
+              className="group flex flex-wrap items-center gap-3.5 border-b border-pine-700/60 px-4 py-3 last:border-b-0 transition-colors hover:bg-pine-900/70"
+            >
+              <Avatar url={p.avatarUrl} login={p.login} size={34} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link to={`/app/prospects/${p.id}`} className="text-[14px] font-semibold text-fog-100 hover:text-signal-300">@{p.login}</Link>
+                  <StatusPill status={p.status} />
+                  <Badge tone="pine" className="font-mono text-[10px]">{projectName(p.projectId)}</Badge>
+                </div>
+                <p className="mt-0.5 truncate text-[11.5px] text-fog-500">{p.explanation}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="text-right">
+                  <div className="font-display text-[16px] font-bold leading-none text-fog-100">{p.score}</div>
+                  <div className="font-mono text-[8.5px] uppercase tracking-wider text-fog-500">{p.confidence}</div>
+                </div>
+                <QuickAdvance
+                  status={p.status}
+                  onAdvance={(to) => {
+                    setStatus(p.id, to, { channel: to === "contacted" ? (p.contactChannel ?? "github") : undefined });
+                    toast("ok", `@${p.login} → ${statusLabel(to)}`);
+                  }}
+                />
+                <Link
+                  to={`/app/prospects/${p.id}`}
+                  aria-label={`Open @${p.login}`}
+                  className="rounded-md border border-pine-600 p-2 text-fog-400 transition-colors hover:border-signal-500/60 hover:text-signal-300"
+                >
+                  <IArrowR size={13} />
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Funnel — compact, below main workspace */}
+      <section className="mt-10 border-t border-pine-700/60 pt-8">
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="font-display text-[16px] font-bold text-fog-100">Pipeline</h2>
+          <span className="font-mono text-[10.5px] uppercase tracking-wider text-fog-500">your records only</span>
+        </div>
+        {prospects.length === 0 ? (
+          <p className="text-[12.5px] text-fog-500">Numbers appear once prospects exist. We never show rates we can't back with your records.</p>
+        ) : (
+          <>
+            <FunnelViz stages={funnel.stages} />
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[11.5px] text-fog-500">
+              <span><span className="font-mono text-fog-300">{funnel.notInterested}</span> not interested</span>
+              <span><span className="font-mono text-fog-300">{funnel.archived}</span> archived</span>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Trust panel */}
+      <section className="mt-10 rounded-lg border border-pine-700/60 bg-pine-900/40 p-5">
+        <h3 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-fog-400">
+          <ISend size={12} /> Human-controlled outreach
+        </h3>
+        <p className="mt-2 text-[13px] leading-relaxed text-fog-300">
+          Every message is personal. UserScout helps with context — you decide whether and how to reach out.
+        </p>
+        <ul className="mt-3 grid gap-1.5 text-[12.5px] leading-relaxed text-fog-400 sm:grid-cols-2">
+          <li className="flex gap-2"><span className="text-fog-500">—</span> One personal message per person.</li>
+          <li className="flex gap-2"><span className="text-fog-500">—</span> Reference their public evidence.</li>
+          <li className="flex gap-2"><span className="text-fog-500">—</span> No automated sequences or follow-up spam.</li>
+          <li className="flex gap-2"><span className="text-fog-500">—</span> "Not interested" means don't contact them again.</li>
+        </ul>
+      </section>
+
+      <p className="mt-8 text-center font-mono text-[10.5px] text-fog-600">
+        MIT licensed · local-first build · your outreach history never leaves this device
+      </p>
     </>
+  );
+}
+
+/* — subcomponents — */
+
+function StatTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+  return (
+    <div className="rounded-md border border-pine-700/70 bg-pine-900/50 px-3.5 py-2.5">
+      <div className={cx("font-display text-[18px] font-bold leading-none", accent && value > 0 ? "text-signal-400" : "text-fog-100")}>
+        {value}
+      </div>
+      <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-fog-500">{label}</div>
+    </div>
+  );
+}
+
+function NextCard({
+  prospect,
+  projectName,
+  onOpen,
+}: {
+  prospect: import("../core/types").Prospect;
+  projectName: string;
+  onOpen: () => void;
+}) {
+  const evidenceCount = prospect.signals.reduce((n, s) => n + s.evidence.length, 0);
+  const evidenceStrength =
+    prospect.confidence === "high" ? "Strong evidence" :
+    prospect.confidence === "medium" ? "Medium evidence" :
+    "Weak evidence";
+  const recency = prospect.lastActivityAt ? `Active ${timeAgo(prospect.lastActivityAt)}` : "No recent activity";
+
+  return (
+    <article className="flex h-full flex-col rounded-lg border border-pine-700/80 bg-pine-900/60 p-4 transition-colors hover:border-signal-500/50">
+      <header className="flex items-start gap-3">
+        <Avatar url={prospect.avatarUrl} login={prospect.login} size={38} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-[14.5px] font-semibold text-fog-100">@{prospect.login}</span>
+            {prospect.name && <span className="text-[12px] text-fog-400">{prospect.name}</span>}
+          </div>
+          <div className="mt-0.5 truncate text-[11.5px] text-fog-500">{projectName}</div>
+        </div>
+      </header>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-wider text-fog-500">
+        <span><span className="text-fog-200">{prospect.score}</span> relevance</span>
+        <span aria-hidden="true">·</span>
+        <span>{evidenceStrength}</span>
+        <span aria-hidden="true">·</span>
+        <span>{recency}</span>
+      </div>
+
+      <p className="mt-3 line-clamp-3 text-[12.5px] leading-relaxed text-fog-300">
+        {prospect.explanation}
+      </p>
+
+      <div className="mt-auto pt-4">
+        <Button size="sm" variant="outline" onClick={onOpen} className="w-full">
+          View prospect <IArrowR size={12} />
+        </Button>
+      </div>
+    </article>
   );
 }
 
 function FilterBtn({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <button role="tab" aria-selected={active} onClick={onClick} className={cx("rounded-full border px-3 py-1 text-[11.5px] font-medium transition-colors", active ? "border-signal-500/60 bg-signal-500/12 text-signal-300" : "border-pine-600 text-fog-400 hover:text-fog-100")}>
+    <button
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cx(
+        "rounded-full border px-3 py-1 text-[11.5px] font-medium transition-colors",
+        active
+          ? "border-signal-500/60 bg-signal-500/12 text-signal-300"
+          : "border-pine-600 text-fog-400 hover:text-fog-100",
+      )}
+    >
       {label}
     </button>
   );
@@ -133,15 +319,7 @@ function QuickAdvance({ status, onAdvance }: { status: ProspectStatus; onAdvance
   if (!n) return null;
   return (
     <Button size="sm" variant="outline" onClick={() => onAdvance(n.to)} title={`Move to: ${n.label}`}>
-      <ICheckSm /> {n.label}
+      <ICheck size={11} /> {n.label}
     </Button>
-  );
-}
-
-function ICheckSm() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4.5 12.5 10 18 19.5 6.5" />
-    </svg>
   );
 }

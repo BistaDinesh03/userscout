@@ -5,11 +5,13 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { DraftChannel, ProspectStatus } from "../core/types";
 import { STATUSES, statusLabel } from "../core/types";
+import { useEffect, useState as useStateExtra } from "react";
 import { useWorkspace } from "../state/store";
 import { PageHead } from "../components/layout";
 import { Avatar, CopyButton, EvidenceRow, ScoreDial, SignalBreakdown } from "../components/bits";
 import { IAlert, IArrowL, ICheck, IClock, IExt, IFlag, IInbox, INote, ISend, IStar, ITerminal, IUsers } from "../components/icons";
 import { Badge, Button, ConfidenceBadge, EmptyState, Field, Select, StatusPill, Textarea } from "../components/ui";
+import { ContactChannelsPanel } from "../components/ContactChannelsPanel";
 import { cx, formatDate, formatClock, timeAgo } from "../core/utils";
 
 const NEXT_STEP: Partial<Record<ProspectStatus, { to: ProspectStatus; label: string }>> = {
@@ -32,6 +34,9 @@ export default function ProspectDetail() {
   const [draftChannel, setDraftChannel] = useState<DraftChannel | null>(null);
   const [fb, setFb] = useState({ rating: 0, useful: "", confusing: "", improve: "", wouldUseAgain: "maybe" as "yes" | "no" | "maybe", notes: "" });
   const [fbTouched, setFbTouched] = useState(false);
+  const [enrichBusy, setEnrichBusy] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
+  const [enrichResult, setEnrichResult] = useState<{ channels: any[]; errors: string[] } | null>(null);
 
   const timeline = useMemo(() => events.filter((e) => e.prospectId === pid).sort((a, b) => b.at - a.at), [events, pid]);
   const draft = drafts.find((d) => d.prospectId === pid);
@@ -133,6 +138,8 @@ export default function ProspectDetail() {
 
         {/* RIGHT — outreach workspace */}
         <div className="space-y-5">
+          <ContactChannelsPanel prospectId={prospect.id} />
+
           <section className="brackets rounded-lg border border-pine-600 bg-pine-900/80 p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-display text-[15px] font-bold"><ISend size={14} className="text-signal-400" /> Personal outreach</h2>
