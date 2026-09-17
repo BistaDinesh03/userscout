@@ -145,6 +145,16 @@ export const api = {
   listContactChannels: (prospectId: string) =>
     request(`/api/prospects/${prospectId}/contact-channels`),
 
+  // Deletions & archival
+  deleteProject: (projectId: string) =>
+    request(`/api/projects/${projectId}`, { method: "DELETE" }),
+  deleteProspect: (prospectId: string) =>
+    request(`/api/prospects/${prospectId}`, { method: "DELETE" }),
+  archiveProspect: (prospectId: string) =>
+    request(`/api/prospects/${prospectId}/archive`, { method: "PATCH" }),
+  unarchiveProspect: (prospectId: string) =>
+    request(`/api/prospects/${prospectId}/unarchive`, { method: "PATCH" }),
+
   // Health
   health: () =>
     request("/api/health"),

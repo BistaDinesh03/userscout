@@ -36,6 +36,8 @@ interface Workspace {
   reload: () => Promise<void>;
   createProject: (profile: ProjectProfile) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
+  deleteProspect: (id: string) => Promise<void>;
+  archiveProspect: (id: string, archived: boolean) => Promise<void>;
   setDiscoverable: (id: string, v: boolean) => Promise<void>;
   markDiscovered: (id: string) => Promise<void>;
   saveDiscovery: (projectId: string, scored: ScoredCandidate[]) => Promise<{ created: number; updated: number }>;
@@ -161,7 +163,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         await reload();
         return r.project;
       },
-      deleteProject: async () => { await reload(); },
+      deleteProject: async (id) => {
+        await api.deleteProject(id);
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        setProspects((prev) => prev.filter((p) => p.projectId !== id));
+        await reload();
+      },
+      deleteProspect: async (id) => {
+        await api.deleteProspect(id);
+        setProspects((prev) => prev.filter((p) => p.id !== id));
+        await reload();
+      },
+      archiveProspect: async (id, archived) => {
+        if (archived) {
+          await api.archiveProspect(id);
+        } else {
+          await api.unarchiveProspect(id);
+        }
+        await reload();
+      },
       setDiscoverable: async () => { await reload(); },
       markDiscovered: async () => { await reload(); },
       saveDiscovery: async (projectId, scored) => {

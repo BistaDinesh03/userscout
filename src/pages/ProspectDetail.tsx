@@ -2,7 +2,7 @@
  * Nothing here sends a message. Humans decide, humans write, humans send. */
 
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import type { DraftChannel, ProspectStatus } from "../core/types";
 import { STATUSES, statusLabel } from "../core/types";
 import { useEffect, useState as useStateExtra } from "react";
@@ -10,7 +10,7 @@ import { useWorkspace } from "../state/store";
 import { PageHead } from "../components/layout";
 import { Avatar, CopyButton, EvidenceRow, ScoreDial, SignalBreakdown } from "../components/bits";
 import { IAlert, IArrowL, ICheck, IClock, IExt, IFlag, IInbox, INote, ISend, IStar, ITerminal, IUsers } from "../components/icons";
-import { Badge, Button, ConfidenceBadge, EmptyState, Field, Select, StatusPill, Textarea } from "../components/ui";
+import { Badge, Button, ConfidenceBadge, EmptyState, Field, Modal, Select, StatusPill, Textarea } from "../components/ui";
 import { ContactChannelsPanel } from "../components/ContactChannelsPanel";
 import { cx, formatDate, formatClock, timeAgo } from "../core/utils";
 
@@ -24,7 +24,8 @@ const NEXT_STEP: Partial<Record<ProspectStatus, { to: ProspectStatus; label: str
 
 export default function ProspectDetail() {
   const { pid } = useParams<{ pid: string }>();
-  const { prospects, projects, events, drafts, feedback, user, setStatus, addNote, saveDraft, saveFeedback, toast } = useWorkspace();
+  const { prospects, projects, events, drafts, feedback, user, setStatus, addNote, saveDraft, saveFeedback, deleteProspect, archiveProspect, toast } = useWorkspace();
+  const nav = useNavigate();
 
   const prospect = prospects.find((p) => p.id === pid);
   const project = projects.find((p) => p.id === prospect?.projectId);
@@ -34,6 +35,8 @@ export default function ProspectDetail() {
   const [draftChannel, setDraftChannel] = useState<DraftChannel | null>(null);
   const [fb, setFb] = useState({ rating: 0, useful: "", confusing: "", improve: "", wouldUseAgain: "maybe" as "yes" | "no" | "maybe", notes: "" });
   const [fbTouched, setFbTouched] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [enrichBusy, setEnrichBusy] = useState(false);
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichResult, setEnrichResult] = useState<{ channels: any[]; errors: string[] } | null>(null);
@@ -290,6 +293,39 @@ export default function ProspectDetail() {
           </section>
         </div>
       </div>
+      {/* Confirm permanent deletion */}
+      <Modal open={confirmDelete} onClose={() => !deleting && setConfirmDelete(false)} title="Delete prospect?">
+        <div className="space-y-4">
+          <p className="text-[13px] leading-relaxed text-fog-300">
+            Permanently delete <strong className="text-fog-100">@{prospect.login}</strong> and all associated
+            evidence, notes, outreach history, drafts, and feedback. This cannot be undone.
+          </p>
+          <p className="text-[12px] text-fog-500">
+            If you just want them out of active views, use <strong className="text-fog-300">Archive</strong> instead — it preserves history.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</Button>
+            <Button
+              variant="danger"
+              loading={deleting}
+              onClick={async () => {
+                setDeleting(true);
+                try {
+                  await deleteProspect(prospect.id);
+                  toast("ok", `@${prospect.login} permanently deleted.`);
+                  nav("/app/outreach");
+                } catch (err) {
+                  toast("err", err instanceof Error ? err.message : "Could not delete prospect.");
+                  setDeleting(false);
+                  setConfirmDelete(false);
+                }
+              }}
+            >
+              Delete permanently
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

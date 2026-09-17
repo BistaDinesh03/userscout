@@ -226,6 +226,67 @@ def _serialize_channel(c: models.ContactChannel):
     }
 
 
+
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id, models.Project.owner_id == user.id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    # Cascade deletion is handled by SQLAlchemy relationships (cascade="all, delete-orphan")
+    # for prospects -> contact_channel_rows and events. Delete explicit children first for safety
+    # in case any were created without a proper relationship.
+    db.query(models.ContactChannel).filter(
+        models.ContactChannel.prospect_id.in_(
+            db.query(models.Prospect.id).filter(models.Prospect.project_id == project_id)
+        )
+    ).delete(synchronize_session=False)
+    db.query(models.OutreachMessage).filter(models.OutreachMessage.prospect_id.in_(
+        db.query(models.Prospect.id).filter(models.Prospect.project_id == project_id)
+    )).delete(synchronize_session=False)
+    db.query(models.OutreachEvent).filter(models.OutreachEvent.project_id == project_id).delete(synchronize_session=False)
+    db.query(models.Feedback).filter(models.Feedback.project_id == project_id).delete(synchronize_session=False)
+    db.query(models.Prospect).filter(models.Prospect.project_id == project_id).delete(synchronize_session=False)
+    db.delete(project)
+    db.commit()
+    return {"ok": True, "deleted": project_id}
+
+
+@app.delete("/api/prospects/{prospect_id}")
+async def delete_prospect(prospect_id: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    db.query(models.ContactChannel).filter(models.ContactChannel.prospect_id == prospect_id).delete(synchronize_session=False)
+    db.query(models.OutreachMessage).filter(models.OutreachMessage.prospect_id == prospect_id).delete(synchronize_session=False)
+    db.query(models.OutreachEvent).filter(models.OutreachEvent.prospect_id == prospect_id).delete(synchronize_session=False)
+    db.query(models.Feedback).filter(models.Feedback.prospect_id == prospect_id).delete(synchronize_session=False)
+    db.delete(prospect)
+    db.commit()
+    return {"ok": True, "deleted": prospect_id}
+
+
+@app.patch("/api/prospects/{prospect_id}/archive")
+async def archive_prospect(prospect_id: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    prospect.archived = True
+    db.commit()
+    db.refresh(prospect)
+    return {"prospect": prospect.__dict__}
+
+
+@app.patch("/api/prospects/{prospect_id}/unarchive")
+async def unarchive_prospect(prospect_id: str, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    prospect.archived = False
+    db.commit()
+    db.refresh(prospect)
+    return {"prospect": prospect.__dict__}
+
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "database": "connected"}
