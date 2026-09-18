@@ -1,4 +1,4 @@
-/* Landing — opens with the thing UserScout actually does: scout a repo. */
+﻿/* Landing — the public entry point for UserScout. */
 
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
@@ -8,27 +8,12 @@ import { SIGNAL_DOCS, bandOf } from "../core/scoring";
 import type { AnalysisProgress, DiscoveryProgress, ProjectProfile } from "../core/types";
 import { useWorkspace } from "../state/store";
 import { Chip, ConsoleLog, Radar, ScoreDial } from "../components/bits";
-import { IAlert, IArrowR, IBranch, ICheck, ICompass, IDownload, IEye, IFlag, IHand, IIssue, ILock, IRadar, ISearch, IShield, IStar, ITerminal, IUsers, IX, IZap, IZip } from "../components/icons";
+import { IAlert, IArrowR, IBranch, ICheck, ICompass, IEye, IFlag, IHand, IIssue, ILock, IRadar, ISearch, IShield, IStar, ITerminal, IUsers, IX, IZap } from "../components/icons";
 import { Badge, Button, ConfidenceBadge, Input } from "../components/ui";
 import { Logo } from "../components/layout";
 import { clamp, cx, formatNumber } from "../core/utils";
-import { downloadProjectZip, sourceFileCount } from "../download";
 
-const PIPELINE = [
-  "GitHub repo",
-  "analysis",
-  "target audience",
-  "discovery",
-  "evidence",
-  "relevance score",
-  "why this person?",
-  "save prospect",
-  "personal outreach",
-  "reply",
-  "project trial",
-  "feedback",
-  "user",
-];
+const GITHUB_URL = "https://github.com/BistaDinesh03/userscout";
 
 export default function Landing() {
   const { user } = useWorkspace();
@@ -36,58 +21,42 @@ export default function Landing() {
     <div className="relative z-10">
       <TopNav signedIn={!!user} />
       <ScoutSection signedIn={!!user} />
+      <WhySection />
+      <HowItWorksSection />
+      <EvidenceSection />
       <SignalHierarchy />
       <ScoringDemo />
-      <LoopSection />
       <EthicsSection />
+      <OpenSourceSection />
+      <FinalCTA signedIn={!!user} />
       <Footer />
     </div>
   );
 }
 
-/* One-click source bundle — the whole project as a ZIP, built in-browser. */
-function DownloadButton({ variant = "outline", size = "sm", withLabel = true }: { variant?: "outline" | "ghost"; size?: "sm" | "md"; withLabel?: boolean }) {
-  const { toast } = useWorkspace();
-  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
-  const run = async () => {
-    if (state === "busy") return;
-    setState("busy");
-    try {
-      const n = await downloadProjectZip();
-      setState("done");
-      toast("ok", `userscout-source.zip saved — ${n} files. Unzip, then: npm install; npm run dev`);
-      window.setTimeout(() => setState("idle"), 2600);
-    } catch {
-      setState("idle");
-      toast("err", "Could not build the ZIP in this browser. Try a current Chrome/Firefox/Edge/Safari.");
-    }
-  };
-  return (
-    <Button variant={variant} size={size} onClick={run} loading={state === "busy"} aria-label="Download the complete project source as a ZIP file">
-      {state === "done" ? <ICheck size={13} /> : <IDownload size={13} />}
-      {withLabel && (state === "done" ? "Saved" : "Download source")}
-    </Button>
-  );
-}
+/* ── Top navigation ── */
 
 function TopNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b border-pine-800/80 bg-pine-950/85 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
-        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="UserScout"><Logo /></button>
+        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="UserScout home">
+          <Logo />
+        </button>
         <nav className="hidden items-center gap-6 text-[13px] text-fog-400 md:flex" aria-label="Landing sections">
-          <button type="button" onClick={() => document.getElementById("signals")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Signal model</button>
+          <button type="button" onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">How it works</button>
+          <button type="button" onClick={() => document.getElementById("evidence")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Evidence</button>
           <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Scoring</button>
           <button type="button" onClick={() => document.getElementById("ethics")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-signal-300 transition-colors">Ethics</button>
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-signal-300 transition-colors">GitHub</a>
         </nav>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:inline-flex"><DownloadButton /></span>
           {signedIn ? (
             <Link to="/app"><Button size="sm">Open workspace <IArrowR size={13} /></Button></Link>
           ) : (
             <>
               <Link to="/auth" className="rounded-md px-3 py-1.5 text-[13px] font-medium text-fog-300 hover:text-fog-100">Sign in</Link>
-              <Link to="/auth?mode=register"><Button size="sm">Create workspace</Button></Link>
+              <Link to="/auth?mode=register"><Button size="sm">Try UserScout</Button></Link>
             </>
           )}
         </div>
@@ -96,7 +65,7 @@ function TopNav({ signedIn }: { signedIn: boolean }) {
   );
 }
 
-/* ── Opening: the scout console ── */
+/* ── Hero: the scout console (existing, preserved) ── */
 
 function ScoutSection({ signedIn }: { signedIn: boolean }) {
   const { gh } = useWorkspace();
@@ -135,36 +104,36 @@ function ScoutSection({ signedIn }: { signedIn: boolean }) {
       <div className="reveal">
         <p className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-signal-400">
           <span className="size-1.5 rounded-full bg-signal-400 pulse-dot" />
-          open-source user discovery
+          for developers who have already shipped
         </p>
-        <h1 className="font-display text-[40px] font-extrabold leading-[1.04] tracking-tight text-fog-100 md:text-[58px]">
-          Your next ten users are{" "}
+        <h1 className="font-display text-[38px] font-extrabold leading-[1.06] tracking-tight text-fog-100 md:text-[52px]">
+          Find people worth talking to about{" "}
           <span className="relative inline-block text-signal-400">
-            already asking
+            what you built
             <svg className="absolute -bottom-1.5 left-0 w-full" viewBox="0 0 220 8" aria-hidden="true"><path d="M2 6C60 1 160 1 218 5" stroke="#f2a93b" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity=".5" /></svg>
-          </span>{" "}
-          for this.
+          </span>
+          .
         </h1>
         <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-fog-300">
-          Point UserScout at your GitHub repo. It reads what you built, works out who it's for, then finds people with{" "}
-          <em className="not-italic text-fog-100">public evidence</em> they need it — and explains every score, point by point.
+          Point UserScout at your GitHub repo. It finds people with{" "}
+          <em className="not-italic text-fog-100">public evidence</em> connected to the problem you solve — and shows you why each person is worth considering.
         </p>
-        <ul className="mt-6 space-y-2 text-[13.5px] text-fog-400">
-          {["No mass outreach. Ever. A human writes every message.", "Deterministic scoring — same input, same result.", "Only public GitHub data; your CRM stays on your device."].map((t) => (
-            <li key={t} className="flex items-start gap-2.5">
-              <span className="mt-0.5 text-leaf-400"><ICheck size={14} /></span>
-              {t}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-7 flex flex-wrap items-center gap-3">
           <Link to={signedIn ? "/app/projects/new" : "/auth?mode=register"}>
-            <Button>Add your project <IArrowR size={14} /></Button>
+            <Button>Try UserScout <IArrowR size={14} /></Button>
           </Link>
-          <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300">
-            How scoring works
-          </button>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-pine-600 px-4 py-2.5 text-sm font-medium text-fog-300 transition-colors hover:border-signal-500/60 hover:text-signal-300"
+          >
+            View on GitHub
+          </a>
         </div>
+        <p className="mt-5 font-mono text-[11px] uppercase tracking-wider text-fog-500">
+          Open source · Evidence-first · Human-controlled
+        </p>
       </div>
 
       {/* console */}
@@ -239,7 +208,142 @@ function ScoutSection({ signedIn }: { signedIn: boolean }) {
   );
 }
 
-/* ── Signal hierarchy ── */
+/* ── Section 2: Why ── */
+
+function WhySection() {
+  return (
+    <section className="border-y border-pine-800 bg-pine-900/40 py-20">
+      <div className="mx-auto max-w-4xl px-4 text-center md:px-6">
+        <h2 className="font-display text-[28px] font-extrabold tracking-tight text-fog-100 md:text-[36px]">
+          You built the product. Now find the people.
+        </h2>
+        <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-fog-400">
+          Finding your first users often means searching GitHub, communities, profiles, projects, and discussions — then trying to work out who is actually worth contacting.
+        </p>
+        <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-fog-300">
+          UserScout turns that research into a shortlist with evidence.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ── Section 3: How it works (5 steps) ── */
+
+const STEPS = [
+  { n: "01", title: "Analyze", body: "Understand your project and who it's for." },
+  { n: "02", title: "Discover", body: "Find people with relevant public evidence." },
+  { n: "03", title: "Qualify", body: "See why they're relevant and why now." },
+  { n: "04", title: "Connect", body: "Save prospects and reach out personally." },
+  { n: "05", title: "Learn", body: "Track replies, trials, feedback, and users." },
+];
+
+function HowItWorksSection() {
+  return (
+    <section id="how" className="py-20">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <SectionHead kicker="how it works" title="From project to real conversations." body="Five steps, one loop. You stay in control of every message." />
+        <ol className="mt-10 grid gap-3 md:grid-cols-5">
+          {STEPS.map((s) => (
+            <li key={s.n} className="rounded-lg border border-pine-700/70 bg-pine-900/50 p-5 transition-colors hover:border-pine-600">
+              <div className="font-mono text-[10.5px] uppercase tracking-wider text-signal-400">{s.n}</div>
+              <div className="mt-2 font-display text-[16px] font-bold text-fog-100">{s.title}</div>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-fog-400">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-wider text-fog-500">
+          Analyze → Discover → Qualify → Connect → Learn
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ── Section 4: Evidence (why this person) ── */
+
+function EvidenceSection() {
+  return (
+    <section id="evidence" className="border-y border-pine-800 bg-pine-900/40 py-20">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <SectionHead kicker="evidence first" title="Don't just show me a lead. Show me why." body="UserScout focuses on the evidence behind a recommendation, not just a name and a score." />
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <ProspectCardMock />
+          <div className="flex flex-col justify-center gap-4 text-[14px] leading-relaxed text-fog-300">
+            <p>
+              Every prospect carries the reason they surfaced: the public activity, the repository, the discussion, the contribution.
+            </p>
+            <p>
+              You see relevance, evidence strength, recency, and confidence as separate dimensions — not collapsed into one black-box number.
+            </p>
+            <p className="text-fog-400">
+              Public activity indicates they <em className="not-italic text-fog-200">may</em> be worth talking to about this problem. Nothing more is claimed.
+            </p>
+            <ul className="mt-2 space-y-2 text-[13px]">
+              {["Why this person", "Evidence", "Why now", "Evidence-based confidence"].map((t) => (
+                <li key={t} className="flex items-start gap-2.5 text-fog-300">
+                  <span className="mt-0.5 text-leaf-400"><ICheck size={14} /></span> {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProspectCardMock() {
+  return (
+    <div className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
+      <div className="flex items-center gap-3">
+        <span className="flex size-11 items-center justify-center rounded-full border border-pine-600 bg-pine-800 font-mono text-[13px] font-semibold text-signal-300">SC</span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[15px] font-bold text-fog-100">@sarah-chen</div>
+          <div className="mt-0.5 font-mono text-[11px] text-fog-500">Developer tooling · Berlin</div>
+        </div>
+        <Badge tone="green" className="font-mono text-[9.5px]">STRONG EVIDENCE</Badge>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2">
+        <MiniStat label="Relevance" value="86" />
+        <MiniStat label="Recency" value="Recent" />
+        <MiniStat label="Confidence" value="High" />
+        <MiniStat label="Contactability" value="GitHub + site" />
+      </div>
+
+      <div className="mt-5 rounded-md border border-pine-700 bg-pine-950/60 p-3.5">
+        <div className="font-mono text-[10px] uppercase tracking-wider text-fog-500">Why this person</div>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-fog-200">
+          Recently opened an issue asking how to gather structured feedback from early users. Maintains a related CLI tool.
+        </p>
+      </div>
+
+      <div className="mt-3 rounded-md border border-pine-700 bg-pine-950/60 p-3.5">
+        <div className="font-mono text-[10px] uppercase tracking-wider text-fog-500">Why now</div>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-fog-200">
+          Relevant public activity observed 6 days ago.
+        </p>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-pine-700/60 pt-3">
+        <span className="font-mono text-[10.5px] uppercase tracking-wider text-fog-500">Evidence timeline</span>
+        <span className="font-mono text-[10.5px] text-fog-500">Sep 12 · Sep 08 · Aug 29</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-pine-700/70 bg-pine-950/40 px-3 py-2">
+      <div className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">{label}</div>
+      <div className="mt-0.5 font-display text-[13.5px] font-bold text-fog-100">{value}</div>
+    </div>
+  );
+}
+
+/* ── Signal hierarchy (existing, preserved) ── */
 
 const STRONG = [
   { icon: IIssue, t: "Publicly asks for a solution", d: "Open issues phrased as questions about your exact problem." },
@@ -303,7 +407,7 @@ function SignalHierarchy() {
   );
 }
 
-/* ── Interactive scoring demo ── */
+/* ── Scoring demo (existing, preserved) ── */
 
 const DEMO_DEFAULTS: Record<string, boolean> = { asking: true, maintainer: true, tech: true, recency: true, contributor: false, audience: false };
 
@@ -364,83 +468,114 @@ function ScoringDemo() {
   );
 }
 
-/* ── The loop ── */
-
-function LoopSection() {
-  return (
-    <section className="border-y border-pine-800 bg-pine-900/40 py-16">
-      <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <SectionHead kicker="the whole loop" title="From repo to retained user." body="One pipeline, tracked honestly. Metrics shown in the workspace are computed from your own records — never invented." />
-        <ol className="mt-9 flex gap-2 overflow-x-auto pb-3 slim-scroll" aria-label="Product flow pipeline">
-          {PIPELINE.map((step, i) => (
-            <li key={step} className="flex shrink-0 items-center gap-2">
-              <span className={cx(
-                "flex items-center gap-2 rounded-md border px-3 py-2 font-mono text-[11.5px]",
-                i === 0 ? "border-signal-500/50 bg-signal-500/10 text-signal-300" : i === PIPELINE.length - 1 ? "border-leaf-500/50 bg-leaf-500/10 text-leaf-300" : "border-pine-600 bg-pine-900/80 text-fog-300",
-              )}>
-                <span className="text-fog-500">{String(i + 1).padStart(2, "0")}</span>
-                {step}
-              </span>
-              {i < PIPELINE.length - 1 && <span className="text-pine-500"><IArrowR size={12} /></span>}
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-/* ── Ethics ── */
+/* ── Ethics (existing, copy refreshed) ── */
 
 function EthicsSection() {
   const yes = [
     "Surfaces only public GitHub activity, via the official API",
     "Explains every recommendation with links to the evidence",
     "Leaves the decision — and the message — to a human",
-    "Stores notes & outreach history privately on your device",
+    "Keeps notes and outreach history private",
   ];
   const no = [
-    "No automatic emails or bulk messaging",
-    "No scraping of private data or bypassing auth",
-    "No selling or sharing of personal information",
-    "No dark patterns, no fabricated social proof",
+    "Automatic emails or bulk messaging",
+    "Scraping private data or bypassing auth",
+    "Selling or sharing personal information",
+    "Fabricated social proof",
   ];
   return (
-    <section id="ethics" className="py-20">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-[1fr_1fr_1fr] md:px-6">
-        <div>
-          <SectionHead kicker="hard limits" title="Built to find users, not to spam." body="UserScout exists because cold mass-outreach is broken. It will never become the thing it's trying to replace." compact />
-          <div className="mt-6 flex items-center gap-2.5 rounded-md border border-pine-700 bg-pine-900/70 px-4 py-3 text-[12.5px] text-fog-400">
-            <IShield size={16} className="shrink-0 text-signal-400" />
-            The person you're writing to is the point — personalization over volume.
+    <section id="ethics" className="border-y border-pine-800 bg-pine-900/40 py-20">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <SectionHead kicker="how we build" title="Built for conversations, not campaigns." body="UserScout helps you decide who is worth contacting. You write the message. You decide who receives it." />
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-leaf-500/25 bg-pine-900/70 p-6">
+            <div className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-leaf-300"><IHand size={14} /> does</div>
+            <ul className="space-y-2.5">
+              {yes.map((t) => <li key={t} className="flex gap-2.5 text-[13.5px] leading-relaxed text-fog-300"><span className="mt-0.5 shrink-0 text-leaf-400"><ICheck size={14} /></span>{t}</li>)}
+            </ul>
+          </div>
+          <div className="rounded-lg border border-ember-500/25 bg-pine-900/70 p-6">
+            <div className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ember-400"><IZap size={14} /> doesn't</div>
+            <ul className="space-y-2.5">
+              {no.map((t) => <li key={t} className="flex gap-2.5 text-[13.5px] leading-relaxed text-fog-300"><span className="mt-0.5 shrink-0 text-ember-400"><IX size={14} /></span>{t}</li>)}
+            </ul>
           </div>
         </div>
-        <div className="rounded-lg border border-leaf-500/25 bg-pine-900/70 p-5">
-          <div className="mb-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-leaf-300"><IHand size={14} /> does</div>
-          <ul className="space-y-2.5">
-            {yes.map((t) => <li key={t} className="flex gap-2.5 text-[13px] leading-relaxed text-fog-300"><span className="mt-0.5 shrink-0 text-leaf-400"><ICheck size={14} /></span>{t}</li>)}
-          </ul>
-        </div>
-        <div className="rounded-lg border border-ember-500/25 bg-pine-900/70 p-5">
-          <div className="mb-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ember-400"><IZap size={14} /> refuses to</div>
-          <ul className="space-y-2.5">
-            {no.map((t) => <li key={t} className="flex gap-2.5 text-[13px] leading-relaxed text-fog-300"><span className="mt-0.5 shrink-0 text-ember-400"><IX size={14} /></span>{t}</li>)}
-          </ul>
+        <div className="mt-6 flex items-center gap-2.5 rounded-md border border-pine-700 bg-pine-900/70 px-4 py-3 text-[13px] text-fog-400">
+          <IShield size={16} className="shrink-0 text-signal-400" />
+          The person you're writing to is the point — personalization over volume.
         </div>
       </div>
     </section>
   );
 }
 
+/* ── Open source ── */
+
+function OpenSourceSection() {
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-4xl px-4 text-center md:px-6">
+        <h2 className="font-display text-[28px] font-extrabold tracking-tight text-fog-100 md:text-[36px]">
+          Open source. Inspectable by design.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-fog-400">
+          See how UserScout works, inspect the code, and contribute.
+        </p>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+            <Button>
+              <IBranch size={14} /> View UserScout on GitHub
+            </Button>
+          </a>
+          <span className="font-mono text-[11.5px] uppercase tracking-wider text-fog-500">
+            MIT licensed · Open source
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Final CTA ── */
+
+function FinalCTA({ signedIn }: { signedIn: boolean }) {
+  return (
+    <section className="border-t border-pine-800 bg-gradient-to-b from-pine-900/40 to-pine-950 py-24">
+      <div className="mx-auto max-w-3xl px-4 text-center md:px-6">
+        <div className="mb-6 flex justify-center"><Radar size={92} active /></div>
+        <h2 className="font-display text-[30px] font-extrabold leading-tight tracking-tight text-fog-100 md:text-[40px]">
+          You built something.<br />Now find the people worth talking to.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-fog-400">
+          Start with a GitHub repository and see what UserScout can uncover.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link to={signedIn ? "/app/projects/new" : "/auth?mode=register"}>
+            <Button>Try UserScout <IArrowR size={14} /></Button>
+          </Link>
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline">View on GitHub</Button>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Shared section head ── */
+
 function SectionHead({ kicker, title, body, compact }: { kicker: string; title: string; body: string; compact?: boolean }) {
   return (
     <div className={compact ? "max-w-sm" : "max-w-2xl"}>
       <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-signal-400">{kicker}</p>
-      <h2 className={cx("mt-2.5 font-display font-extrabold tracking-tight text-fog-100", compact ? "text-[26px]" : "text-[32px] md:text-[38px]")}>{title}</h2>
+      <h2 className={cx("mt-2.5 font-display font-extrabold tracking-tight text-fog-100", compact ? "text-[26px]" : "text-[30px] md:text-[36px]")}>{title}</h2>
       <p className="mt-3 text-[14px] leading-relaxed text-fog-400">{body}</p>
     </div>
   );
 }
+
+/* ── Footer ── */
 
 function Footer() {
   return (
@@ -448,22 +583,19 @@ function Footer() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 md:px-6">
         <div className="flex items-center gap-2.5">
           <Logo size="sm" />
-          <span className="font-mono text-[11px] text-fog-500">MIT licensed · open source</span>
+          <span className="font-mono text-[11px] text-fog-500">MIT licensed · Open source</span>
         </div>
         <div className="flex items-center gap-5 text-[12px] text-fog-500">
-          <button type="button" onClick={() => document.getElementById("signals")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Signals</button>
+          <button type="button" onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">How it works</button>
+          <button type="button" onClick={() => document.getElementById("evidence")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Evidence</button>
           <button type="button" onClick={() => document.getElementById("scoring")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Scoring</button>
           <button type="button" onClick={() => document.getElementById("ethics")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-fog-200">Ethics</button>
-          <Link to="/auth" className="hover:text-fog-200">Workspace</Link>
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-fog-200">GitHub</a>
         </div>
-        <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">
-          <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-fog-500">
-            <IZip size={12} className="text-signal-400/80" /> userscout-source.zip · {sourceFileCount()} files · MIT
-          </span>
-          <span className="sm:hidden"><DownloadButton /></span>
-        </div>
-        <p className="w-full font-mono text-[10.5px] text-fog-500 md:w-auto">local-first build — accounts & CRM live in your browser, not on a server</p>
       </div>
+      <p className="mx-auto mt-6 max-w-6xl px-4 font-mono text-[10.5px] text-fog-500 md:px-6">
+        Evidence-first user discovery · Deterministic scoring · Human-controlled outreach
+      </p>
     </footer>
   );
 }
