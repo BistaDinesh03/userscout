@@ -204,7 +204,7 @@ export async function runDiscovery(
 
   /* ── rank, then enrich only the top candidates ── */
   const ranked = [...map.values()]
-    .map((c) => scoreCandidate(profile, c))
+    .map((c) => scoreCandidate(c, profile))
     .sort((a, b) => b.score - a.score || a.candidate.login.localeCompare(b.candidate.login))
     .slice(0, 12);
 
@@ -224,7 +224,7 @@ export async function runDiscovery(
   }
   onProgress({ stepId: "profiles", status: "ok", message: `${enriched}/${ranked.length} profiles enriched`, count: enriched });
 
-  const final = ranked.map((s) => scoreCandidate(profile, s.candidate)).sort((a, b) => b.score - a.score);
+  const final = ranked.map((s) => scoreCandidate(s.candidate, profile)).sort((a, b) => b.score - a.score);
   onPartial(final);
   return final;
 }

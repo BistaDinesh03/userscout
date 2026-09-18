@@ -93,6 +93,12 @@ function mapProspect(p: any): any {
     cautionSignals: p.caution_signals || [],
     lastActivityAt: p.last_activity_at ? new Date(p.last_activity_at).getTime() : null,
     recommendedAction: p.recommended_action || "",
+    evidenceStrength: p.evidence_strength || null,
+    recencyLevel: p.recency_level || null,
+    contactabilityLevel: p.contactability_level || null,
+    confidenceLevel: p.confidence_level || null,
+    whyThisPerson: p.why_this_person || "",
+    whyNow: p.why_now || "",
   };
 }
 

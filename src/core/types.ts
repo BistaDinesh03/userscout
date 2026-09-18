@@ -57,11 +57,25 @@ export interface Project {
 
 export type EvidenceKind = "issue" | "repo" | "contribution" | "profile";
 
+/** Deterministic evidence strength tier. */
+export type EvidenceStrength = "very_strong" | "strong" | "medium" | "weak";
+
+/** Recency bucket derived from the evidence timestamp. */
+export type RecencyLevel = "very_recent" | "recent" | "aging" | "old" | "unknown";
+
 export interface Evidence {
   kind: EvidenceKind;
   text: string;
   url?: string;
   at?: number;
+  /** Optional — populated by the scoring engine. */
+  strength?: EvidenceStrength;
+  /** Short human-readable reason this evidence matters. */
+  relevanceReason?: string;
+  /** Where it came from (issue, related repo, profile, etc.). */
+  sourceType?: string;
+  /** Deterministic deduplication fingerprint. */
+  fingerprint?: string;
 }
 
 export type SignalId =
@@ -142,6 +156,13 @@ export interface Prospect {
   cautionSignals: CautionSignal[];
   lastActivityAt: number | null;
   recommendedAction: string;
+  /* Evidence intelligence dimensions (Phase 1) */
+  evidenceStrength: EvidenceStrength | null;
+  recencyLevel: RecencyLevel | null;
+  contactabilityLevel: "none" | "low" | "medium" | "high" | null;
+  confidenceLevel: Confidence | null;
+  whyThisPerson: string;
+  whyNow: string;
 }
 
 export type TimelineType = "created" | "status" | "note" | "draft" | "feedback";
@@ -213,6 +234,12 @@ export interface ScoredCandidate {
   confidence: Confidence;
   signals: Signal[];
   explanation: string;
+  /* New dimensions (Phase 1) */
+  evidenceStrength: EvidenceStrength;
+  recencyLevel: RecencyLevel;
+  cautionSignals: CautionSignal[];
+  whyThisPerson: string;
+  whyNow: string;
 }
 
 export interface RateInfo {

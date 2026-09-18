@@ -33,6 +33,13 @@ MAX_BYTES = 100_000
 TIMEOUT_S = 5.0
 USER_AGENT = "UserScout/0.1 (public-contact-discovery; +https://github.com/BistaDinesh03/userscout)"
 
+# These hosts are fixed, first-party endpoints we call directly. They are
+# never user-controlled, so we bypass the private-IP check for them — this
+# protects against environments (corporate DNS, Pi-hole, VPNs) where
+# api.github.com may resolve to a reserved IP that is actually the safe
+# upstream.
+TRUSTED_HOSTS = {"api.github.com", "github.com"}
+
 # Simple pattern for extracting contact-ish info from HTML.
 MAILTO_RE = re.compile(r'mailto:([^"\'>\s?]+)', re.IGNORECASE)
 LINKEDIN_RE = re.compile(r'https?://(?:www\.)?linkedin\.com/in/([A-Za-z0-9\-_%]+)', re.IGNORECASE)
@@ -81,10 +88,13 @@ def _robots_allows(client: httpx.Client, url: str) -> bool:
 
 def _safe_fetch(client: httpx.Client, url: str) -> Optional[str]:
     """Fetch a URL with SSRF + timeout + size guards. Returns text or None."""
-    try:
-        validate_public_http_url(url)
-    except SSRFError:
-        return None
+    from urllib.parse import urlparse as _urlparse
+    host = (_urlparse(url).hostname or "").lower()
+    if host not in TRUSTED_HOSTS:
+        try:
+            validate_public_http_url(url)
+        except SSRFError:
+            return None
     if not _robots_allows(client, url):
         return None
     try:
@@ -119,8 +129,12 @@ def enrich_from_github_profile(username: str) -> EnrichmentResult:
     try:
         validate_public_http_url(api_url)
     except SSRFError as e:
-        result.errors.append(f"github lookup blocked: {e}")
-        return result
+        # api.github.com is a fixed, trusted endpoint — this only fires when
+        # a local DNS resolver misclassifies a public IP as reserved.
+        host = urlparse(api_url).hostname or ""
+        if host not in TRUSTED_HOSTS:
+            result.errors.append(f"github lookup blocked: {e}")
+            return result
 
     headers = {"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT}
     try:
@@ -188,7 +202,9 @@ def _harvest_social_accounts(username: str, result: EnrichmentResult) -> None:
     try:
         validate_public_http_url(api_url)
     except SSRFError:
-        return
+        host = urlparse(api_url).hostname or ""
+        if host not in TRUSTED_HOSTS:
+            return
 
     headers = {"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT}
     try:

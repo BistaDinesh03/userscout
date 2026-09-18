@@ -209,6 +209,12 @@ export class ProspectService {
           cautionSignals: [],
           lastActivityAt: null,
           recommendedAction: "",
+          evidenceStrength: null,
+          recencyLevel: null,
+          contactabilityLevel: null,
+          confidenceLevel: null,
+          whyThisPerson: "",
+          whyNow: "",
         };
         all.push(p);
         newEvents.push(this.event(p, "created", `Saved from discovery — score ${s.score}/100 (${s.confidence} confidence).`));

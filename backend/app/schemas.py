@@ -44,6 +44,12 @@ class ProspectCreate(BaseModel):
     caution_signals: List[Dict[str, Any]] = []
     last_activity_at: Optional[datetime] = None
     recommended_action: str = ""
+    evidence_strength: Optional[str] = None
+    recency_level: Optional[str] = None
+    contactability_level: Optional[str] = None
+    confidence_level: Optional[str] = None
+    why_this_person: str = ""
+    why_now: str = ""
 
 class OutreachEventCreate(BaseModel):
     prospect_id: str

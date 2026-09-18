@@ -204,6 +204,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             caution_signals: [],
             last_activity_at: s.candidate.lastActivityAt ? new Date(s.candidate.lastActivityAt).toISOString() : null,
             recommended_action: "",
+            evidence_strength: s.evidenceStrength,
+            recency_level: s.recencyLevel,
+            contactability_level: s.candidate.contactChannels && s.candidate.contactChannels.length > 0 ? "medium" : "none",
+            confidence_level: s.confidence,
+            why_this_person: s.whyThisPerson,
+            why_now: s.whyNow,
           });
           created++;
         }

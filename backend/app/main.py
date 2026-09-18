@@ -6,9 +6,11 @@ from .config import settings
 from . import models, schemas
 from .auth_utils import hash_password, verify_password, generate_session_token, session_expiry
 from .enrichment import enrich_from_github_profile
+from .migrations_util import ensure_columns
 from datetime import datetime
 
 Base.metadata.create_all(bind=engine)
+ensure_columns(engine)
 
 app = FastAPI(title="UserScout API", version="1.0.0")
 
@@ -286,6 +288,80 @@ async def unarchive_prospect(prospect_id: str, user: models.User = Depends(get_c
     db.refresh(prospect)
     return {"prospect": prospect.__dict__}
 
+
+
+@app.patch("/api/prospects/{prospect_id}/status")
+async def update_prospect_status(prospect_id: str, body: dict, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    status = body.get("status", prospect.status)
+    channel = body.get("channel", prospect.contact_channel)
+    prospect.status = status
+    prospect.contact_channel = channel
+    if status == "contacted":
+        prospect.contacted_at = datetime.utcnow()
+    elif status == "replied":
+        prospect.replied_at = datetime.utcnow()
+    elif status == "user":
+        prospect.converted_at = datetime.utcnow()
+    db.commit()
+    db.refresh(prospect)
+    return {"prospect": prospect.__dict__}
+
+
+@app.post("/api/outreach")
+async def add_outreach_event(body: dict, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect_id = body.get("prospect_id")
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    event = models.OutreachEvent(
+        prospect_id=prospect.id,
+        project_id=prospect.project_id,
+        owner_id=user.id,
+        type=body.get("type", "note"),
+        message=body.get("message", ""),
+        channel=body.get("channel"),
+        to_status=body.get("to_status"),
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return {"event": event.__dict__}
+
+
+@app.post("/api/feedback")
+async def add_feedback(body: dict, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prospect_id = body.get("prospect_id")
+    prospect = db.query(models.Prospect).filter(models.Prospect.id == prospect_id, models.Prospect.owner_id == user.id).first()
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    existing = db.query(models.Feedback).filter(models.Feedback.prospect_id == prospect.id).first()
+    if existing:
+        existing.rating = int(body.get("rating", existing.rating))
+        existing.useful = body.get("useful", existing.useful)
+        existing.confusing = body.get("confusing", existing.confusing)
+        existing.improve = body.get("improve", existing.improve)
+        existing.would_use_again = body.get("wouldUseAgain", existing.would_use_again)
+        existing.notes = body.get("notes", existing.notes)
+        fb = existing
+    else:
+        fb = models.Feedback(
+            prospect_id=prospect.id,
+            project_id=prospect.project_id,
+            owner_id=user.id,
+            rating=int(body.get("rating", 0)),
+            useful=body.get("useful", ""),
+            confusing=body.get("confusing", ""),
+            improve=body.get("improve", ""),
+            would_use_again=body.get("wouldUseAgain", "maybe"),
+            notes=body.get("notes", ""),
+        )
+        db.add(fb)
+    db.commit()
+    db.refresh(fb)
+    return {"feedback": fb.__dict__}
 
 @app.get("/api/health")
 async def health():

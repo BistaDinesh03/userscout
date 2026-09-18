@@ -61,15 +61,15 @@ describe("parseRepoInput", () => {
 
 describe("scoreCandidate", () => {
   it("uses issue body evidence for problem intent", () => {
-    const result = scoreCandidate(profile, candidate({
+    const result = scoreCandidate(candidate({
       isAsking: true,
       evidences: [{ kind: "issue", text: "Asked for help in a public issue.", url: "https://github.com/example/issues/1" }],
-    }));
+    }), profile);
     expect(result.signals.find((signal) => signal.id === "asking")?.points).toBe(30);
   });
 
   it("keeps weak-only candidates low confidence and below the ceiling", () => {
-    const result = scoreCandidate(profile, candidate({ languages: ["Python"], repoTopics: ["discovery"] }));
+    const result = scoreCandidate(candidate({ languages: ["Python"], repoTopics: ["discovery"] }), profile);
     expect(result.score).toBeLessThanOrEqual(43);
     expect(result.confidence).toBe("low");
   });
@@ -86,7 +86,7 @@ describe("scoreCandidate", () => {
     const c = candidate({ contactChannels: channels });
     expect(c.contactChannels).toHaveLength(1);
     expect(c.contactChannels[0].type).toBe("github");
-    const result = scoreCandidate(profile, c);
+    const result = scoreCandidate(c, profile);
     expect(result.candidate.contactChannels).toHaveLength(1);
     expect(result.candidate.contactChannels[0].type).toBe("github");
   });

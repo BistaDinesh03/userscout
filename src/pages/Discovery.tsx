@@ -185,7 +185,11 @@ export default function Discovery() {
                     return (
                       <li key={r.candidate.login} className="reveal rounded-lg border border-pine-700/80 bg-pine-900/70 transition-colors hover:border-pine-600" style={{ animationDelay: `${idx * 50}ms` }}>
                         <div className="flex flex-wrap items-start gap-4 p-4">
-                          <ScoreDial score={r.score} size={68} />
+                          <div className="flex shrink-0 flex-col gap-1">
+                            <MiniDimension label="Rel" value={String(r.score)} accent />
+                            <MiniDimension label="Ev" value={shortEvidence(r.evidenceStrength)} />
+                            <MiniDimension label="Rec" value={shortRecency(r.recencyLevel)} />
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <Avatar url={r.candidate.avatarUrl} login={r.candidate.login} size={24} />
@@ -258,4 +262,35 @@ export default function Discovery() {
       </Modal>
     </>
   );
+}
+
+/* ── card-level dimension helpers (Phase 10) ── */
+
+function MiniDimension({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="flex w-14 items-center justify-between rounded border border-pine-700/70 bg-pine-950/40 px-1.5 py-1">
+      <span className="font-mono text-[8.5px] uppercase tracking-wider text-fog-500">{label}</span>
+      <span className={"font-display text-[12px] font-bold leading-none " + (accent ? "text-signal-400" : "text-fog-200")}>{value}</span>
+    </div>
+  );
+}
+
+function shortEvidence(s: string | null | undefined): string {
+  switch (s) {
+    case "very_strong": return "★★";
+    case "strong": return "★";
+    case "medium": return "~";
+    case "weak": return "·";
+    default: return "?";
+  }
+}
+
+function shortRecency(s: string | null | undefined): string {
+  switch (s) {
+    case "very_recent": return "now";
+    case "recent": return "recent";
+    case "aging": return "aging";
+    case "old": return "old";
+    default: return "—";
+  }
 }

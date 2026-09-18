@@ -118,6 +118,25 @@ export default function ProspectDetail() {
         </div>
       </div>
 
+      <section className="mb-6 rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="font-display text-[14px] font-bold">Why now?</h2>
+          <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">evidence-driven</span>
+        </div>
+        <p className="text-[13px] leading-relaxed text-fog-200">
+          {prospect.whyNow || "No recent problem-related activity found."}
+        </p>
+      </section>
+
+      {/* Dimensions (Phase 1) */}
+      <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <Dimension label="Relevance" value={String(prospect.score)} hint="0–100" />
+        <Dimension label="Evidence" value={labelEvidence(prospect.evidenceStrength)} />
+        <Dimension label="Recency" value={labelRecency(prospect.recencyLevel)} />
+        <Dimension label="Contactability" value={labelContactability(prospect.contactabilityLevel, (prospect.contactChannels ?? []).length)} />
+        <Dimension label="Confidence" value={labelConfidence(prospect.confidenceLevel ?? prospect.confidence)} />
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
         {/* LEFT — why this person */}
         <div className="space-y-5">
@@ -136,6 +155,15 @@ export default function ProspectDetail() {
               {prospect.signals.flatMap((s) => s.evidence).map((e, i) => <EvidenceRow key={i} e={e} />)}
             </ul>
             <p className="mt-3 font-mono text-[10px] leading-relaxed text-fog-500">Every item links to public GitHub activity. Verify before you write — personalization beats volume.</p>
+          </section>
+
+          {/* Evidence timeline (Phase 9) */}
+          <section className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-[15px] font-bold">Evidence timeline</h2>
+              <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">newest first</span>
+            </div>
+            <EvidenceTimeline signals={prospect.signals} />
           </section>
         </div>
 
@@ -327,5 +355,92 @@ export default function ProspectDetail() {
         </div>
       </Modal>
     </>
+  );
+}
+
+/* ── small helpers ── */
+
+function Dimension({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-md border border-pine-700/70 bg-pine-900/50 px-3 py-2.5">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-fog-500">{label}</div>
+      <div className="mt-0.5 font-display text-[15px] font-bold leading-tight text-fog-100">{value}</div>
+      {hint && <div className="mt-0.5 font-mono text-[9.5px] text-fog-600">{hint}</div>}
+    </div>
+  );
+}
+
+function labelEvidence(s: string | null): string {
+  switch (s) {
+    case "very_strong": return "Very strong";
+    case "strong": return "Strong";
+    case "medium": return "Medium";
+    case "weak": return "Weak";
+    default: return "Unknown";
+  }
+}
+
+function labelRecency(s: string | null): string {
+  switch (s) {
+    case "very_recent": return "Very recent";
+    case "recent": return "Recent";
+    case "aging": return "Aging";
+    case "old": return "Old";
+    default: return "Unknown";
+  }
+}
+
+function labelContactability(s: string | null, count: number): string {
+  if (count === 0) return "None";
+  switch (s) {
+    case "high": return "High";
+    case "medium": return "Good";
+    case "low": return "Low";
+    default: return count >= 2 ? "Good" : "Low";
+  }
+}
+
+function labelConfidence(s: string | null | undefined): string {
+  switch (s) {
+    case "high": return "High";
+    case "medium": return "Medium";
+    case "low": return "Low";
+    default: return "Unknown";
+  }
+}
+
+function EvidenceTimeline({ signals }: { signals: import("../core/types").Signal[] }) {
+  const items = signals
+    .flatMap((s) => s.evidence.map((e) => ({ ...e, signalLabel: s.label })))
+    .filter((e) => !!e.at || !!e.text)
+    .sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
+    .slice(0, 12);
+
+  if (!items.length) {
+    return <p className="text-[12.5px] text-fog-500">No dated evidence available.</p>;
+  }
+
+  return (
+    <ol className="relative space-y-3.5 border-l border-pine-700 pl-4">
+      {items.map((e, i) => (
+        <li key={i} className="relative">
+          <span className="absolute -left-[21.5px] top-1.5 size-2.5 rounded-full border-2 border-pine-900 bg-signal-400" />
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">
+              {e.kind} · {e.signalLabel}
+            </span>
+            <span className="shrink-0 font-mono text-[10px] text-fog-500">
+              {e.at ? new Date(e.at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "no date"}
+            </span>
+          </div>
+          <p className="mt-0.5 text-[12.5px] leading-relaxed text-fog-200">{e.text}</p>
+          {e.url && (
+            <a href={e.url} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-0.5 text-[11px] text-tide-400 hover:underline">
+              View source
+            </a>
+          )}
+        </li>
+      ))}
+    </ol>
   );
 }
