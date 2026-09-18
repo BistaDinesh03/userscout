@@ -35,7 +35,7 @@ export default function Discovery() {
 
   if (!project) {
     return (
-      <EmptyState icon={<IAlert size={20} />} title="Project not found" body="Head back to your projects and pick one to scout."
+      <EmptyState icon={<IAlert size={20} />} title="Project not found" body="Head back to your projects and pick one to discover people for."
         action={<Link to="/app/projects"><Button><IArrowL size={13} /> Back to projects</Button></Link>} />
     );
   }
@@ -48,7 +48,7 @@ export default function Discovery() {
     setRunning(true);
     setFatal(null);
     setResults(null);
-    setLines([{ stepId: "start", status: "run", message: `Scouting users for ${project.profile.fullName} — ${formatClock(Date.now())}` }]);
+    setLines([{ stepId: "start", status: "run", message: `Searching for people related to ${project.profile.fullName} — ${formatClock(Date.now())}` }]);
     try {
       const res = await runDiscovery(gh, project.profile, {
         onProgress: addLine,
@@ -97,7 +97,7 @@ export default function Discovery() {
   return (
     <>
       <PageHead
-        title={`Scout · ${project.profile.fullName}`}
+        title={`Discover · ${project.profile.fullName}`}
         sub="Public signals only. Every candidate below comes with receipts."
         right={
           <>
@@ -106,6 +106,46 @@ export default function Discovery() {
           </>
         }
       />
+
+      {/* Project context strip — what problem are we scouting for? */}
+      <div className="mb-6 rounded-lg border border-pine-700/70 bg-pine-900/40 px-5 py-4">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-fog-500">Project</div>
+            <div className="font-display text-[15px] font-bold text-fog-100">{project.profile.fullName}</div>
+          </div>
+          {project.profile.description && (
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-fog-500">Problem space</div>
+              <div className="truncate text-[13px] text-fog-300">{project.profile.description}</div>
+            </div>
+          )}
+        </div>
+        {project.profile.queryTerms.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-fog-500">Search vocabulary:</span>
+            {project.profile.queryTerms.slice(0, 6).map((t) => <Chip key={t}>{t}</Chip>)}
+          </div>
+        )}
+      </div>
+
+      {/* Outcome headline — only when results are in */}
+      {results && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-leaf-500/30 bg-leaf-500/[0.06] px-5 py-4">
+          <div>
+            <div className="font-display text-[17px] font-bold text-fog-100">
+              {results.length} candidate{results.length === 1 ? "" : "s"} found
+              {strongCount > 0 && <span className="text-leaf-300"> · {strongCount} strong opportunit{strongCount === 1 ? "y" : "ies"}</span>}
+            </div>
+            <p className="mt-0.5 text-[12.5px] text-fog-400">
+              Each candidate below comes with public evidence you can verify. Save the ones worth a personal message.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={saveTop}>
+            <IUsers size={13} /> Save strong leads (≥45)
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* results */}
@@ -225,7 +265,7 @@ export default function Discovery() {
               ))}
             </ol>
             <Button onClick={run} loading={running} className="mt-4 w-full">
-              <IRadar size={14} /> {results ? "Run again" : "Start scouting"}
+              <IRadar size={14} /> {results ? "Run again" : "Start discovery"}
             </Button>
             <p className="mt-2.5 text-center font-mono text-[9.5px] leading-relaxed text-fog-500">
               paced for GitHub rate limits · ~15 public API calls

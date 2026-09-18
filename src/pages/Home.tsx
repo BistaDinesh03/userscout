@@ -26,6 +26,23 @@ export default function Home() {
     };
   }, [projects, prospects]);
 
+  // Which onboarding step is the user on? Derived from real data, no persisted flag.
+  const onboardingStep = useMemo<"empty" | "needs_discovery" | "needs_outreach" | "done">(() => {
+    if (projects.length === 0) return "empty";
+    const hasAnyProspect = prospects.some((p) => !p.archived);
+    if (!hasAnyProspect) return "needs_discovery";
+    const hasContacted = prospects.some((p) =>
+      ["contacted", "replied", "tried", "feedback", "user"].includes(p.status)
+    );
+    if (!hasContacted) return "needs_outreach";
+    return "done";
+  }, [projects, prospects]);
+
+  // The single project the user should scout next (most recently created).
+  const primaryProject = useMemo(() => {
+    return [...projects].sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
+  }, [projects]);
+
   // Next actions: real prospects that need attention, sorted deterministically.
   const nextActions = useMemo(() => {
     const uncontacted = prospects.filter((p) => !p.archived && p.status === "saved");
@@ -40,7 +57,7 @@ export default function Home() {
   const projectName = (id: string) => projects.find((p) => p.id === id)?.profile.fullName ?? "—";
 
   /* ── New-user onboarding ── */
-  if (projects.length === 0) {
+  if (onboardingStep === "empty") {
     return (
       <>
         <PageHead
@@ -99,6 +116,41 @@ export default function Home() {
           </Button>
         }
       />
+
+      {/* Progressive onboarding: still early in the loop */}
+      {onboardingStep === "needs_discovery" && primaryProject && (
+        <section className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-signal-500/40 bg-signal-500/[0.06] px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-signal-400">Next step</div>
+            <div className="mt-0.5 font-display text-[15px] font-bold text-fog-100">
+              Project added. Find people with public evidence connected to the problem it solves.
+            </div>
+            <p className="mt-1 text-[12.5px] text-fog-400">
+              UserScout will search public GitHub activity for people who already show signals related to {primaryProject.profile.fullName}.
+            </p>
+          </div>
+          <Button onClick={() => nav(`/app/projects/${primaryProject.id}/discovery`)}>
+            <IRadar size={14} /> Start discovery
+          </Button>
+        </section>
+      )}
+
+      {onboardingStep === "needs_outreach" && (
+        <section className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-signal-500/40 bg-signal-500/[0.06] px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-signal-400">Next step</div>
+            <div className="mt-0.5 font-display text-[15px] font-bold text-fog-100">
+              You're ready for outreach.
+            </div>
+            <p className="mt-1 text-[12.5px] text-fog-400">
+              Review the evidence on your strongest prospects, write your message, and contact them yourself. Nothing is sent automatically.
+            </p>
+          </div>
+          <Button onClick={() => nav("/app/outreach")}>
+            <IInbox size={14} /> Review outreach
+          </Button>
+        </section>
+      )}
 
       {/* Stat strip */}
       <div className="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -178,7 +230,7 @@ export default function Home() {
                     {p.profile.fullName}
                   </Link>
                   <div className="mt-0.5 text-[11.5px] text-fog-500">
-                    {pros.length} prospect{pros.length === 1 ? "" : "s"} · {p.lastDiscoveryAt ? `scouted ${timeAgo(p.lastDiscoveryAt)}` : "not scouted yet"}
+                    {pros.length} prospect{pros.length === 1 ? "" : "s"} · {p.lastDiscoveryAt ? `discovered ${timeAgo(p.lastDiscoveryAt)}` : "not discovered yet"}
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">

@@ -52,11 +52,11 @@ export default function Dashboard() {
       {projects.length === 0 ? (
         <EmptyState
           icon={<IRadar size={20} />}
-          title="No projects yet"
-          body="Add a public GitHub repository. UserScout analyzes what it does, derives who it's for, then finds people with public evidence connected to the problem it solves."
+          title="Start with a project"
+          body="Add a GitHub repository to begin finding people with public evidence connected to the problem it solves."
           action={
             <Button onClick={() => nav("/app/projects/new")}>
-              <IPlus size={14} /> Add your first project
+              <IPlus size={14} /> Add project
             </Button>
           }
         />
@@ -121,12 +121,12 @@ export default function Dashboard() {
                     <span className="flex items-center gap-1.5 text-fog-200"><IUsers size={12} /> {activeCount} prospects</span>
                     <span className="flex items-center gap-1.5 text-leaf-300"><IBranch size={12} /> {funnel.stages[5].count} users</span>
                     <span className="font-mono text-[10.5px] text-fog-500">
-                      {p.lastDiscoveryAt ? `scouted ${timeAgo(p.lastDiscoveryAt)}` : "not scouted yet"}
+                      {p.lastDiscoveryAt ? `discovered ${timeAgo(p.lastDiscoveryAt)}` : "not discovered yet"}
                     </span>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button size="sm" variant="outline" onClick={() => nav(`/app/projects/${p.id}/discovery`)}>
-                      <IRadar size={12} /> Scout
+                      <IRadar size={12} /> Discover
                     </Button>
                     <Link to={`/app/projects/${p.id}`} aria-label={`Open ${p.profile.fullName}`}>
                       <Button size="sm" variant="ghost"><IArrowR size={13} /></Button>

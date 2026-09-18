@@ -36,9 +36,10 @@ export default function Outreach() {
 
   const stats = useMemo(() => ({
     needsAttention: prospects.filter((p) => p.status === "saved" && !p.archived).length,
-    contacted: prospects.filter((p) => p.status === "contacted").length,
-    replied: prospects.filter((p) => p.status === "replied").length,
-    feedback: prospects.filter((p) => p.status === "feedback").length,
+    contacted: prospects.filter((p) => ["contacted", "replied", "tried", "feedback", "user"].includes(p.status)).length,
+    replied: prospects.filter((p) => ["replied", "tried", "feedback", "user"].includes(p.status)).length,
+    tried: prospects.filter((p) => ["tried", "feedback", "user"].includes(p.status)).length,
+    feedback: prospects.filter((p) => ["feedback", "user"].includes(p.status)).length,
     users: prospects.filter((p) => p.status === "user").length,
   }), [prospects]);
 
@@ -48,10 +49,18 @@ export default function Outreach() {
   );
 
   const nextToContact = useMemo(() => {
-    return [...activeList]
-      .filter((p) => p.status === "saved")
+    // Dedupe by (projectId, login) — same person, same project = one card
+    const seen = new Map<string, typeof activeList[number]>();
+    for (const p of activeList) {
+      if (p.status !== "saved") continue;
+      const key = `${p.projectId}::${p.login.toLowerCase()}`;
+      const existing = seen.get(key);
+      if (!existing || (p.score > existing.score) || (p.score === existing.score && (p.lastActivityAt ?? 0) > (existing.lastActivityAt ?? 0))) {
+        seen.set(key, p);
+      }
+    }
+    return [...seen.values()]
       .sort((a, b) => {
-        // prioritize: higher score, then more recent activity
         if (b.score !== a.score) return b.score - a.score;
         return (b.lastActivityAt ?? 0) - (a.lastActivityAt ?? 0);
       })
@@ -74,7 +83,7 @@ export default function Outreach() {
       : `Nothing in "${filter === "all" ? "All" : statusLabel(filter as ProspectStatus)}"`;
 
   const emptyBody = prospects.length === 0
-    ? "Save prospects from a discovery run first. Only people with evidence belong here — quality over quantity."
+    ? "Save prospects from a discovery run first, then decide who to contact. Quality over quantity — only people with evidence belong here."
     : "People move through this pipeline from their detail page.";
 
   return (
@@ -85,10 +94,11 @@ export default function Outreach() {
       />
 
       {/* Stats row */}
-      <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Needs attention" value={stats.needsAttention} accent={stats.needsAttention > 0} />
         <StatTile label="Contacted" value={stats.contacted} />
         <StatTile label="Replied" value={stats.replied} />
+        <StatTile label="Tried" value={stats.tried} />
         <StatTile label="Feedback" value={stats.feedback} />
         <StatTile label="Users" value={stats.users} />
       </div>
@@ -107,7 +117,6 @@ export default function Outreach() {
               <li key={p.id}>
                 <NextCard
                   prospect={p}
-                  projectName={projectName(p.projectId)}
                   onOpen={() => nav(`/app/prospects/${p.id}`)}
                 />
               </li>
@@ -116,7 +125,13 @@ export default function Outreach() {
         </section>
       )}
 
-      {/* Filters */}
+      {/* All outreach heading + filters */}
+      <div className="mb-3 mt-2 flex items-baseline justify-between">
+        <h2 className="font-display text-[16px] font-bold text-fog-100">All outreach</h2>
+        <span className="font-mono text-[10.5px] uppercase tracking-wider text-fog-500">
+          {list.length} {list.length === 1 ? "prospect" : "prospects"}
+        </span>
+      </div>
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by status">
         {FILTERS.map((f) => {
           const n = f.id === "all"
@@ -141,7 +156,7 @@ export default function Outreach() {
           icon={<IInbox size={20} />}
           title={emptyTitle}
           body={emptyBody}
-          action={prospects.length === 0 ? <Button onClick={() => nav("/app/projects")}><IRadar size={14} /> Scout a project</Button> : undefined}
+          action={prospects.length === 0 ? <Button onClick={() => nav("/app/projects")}><IRadar size={14} /> Discover people</Button> : undefined}
         />
       ) : (
         <ul className="overflow-hidden rounded-lg border border-pine-700/80 bg-pine-900/40">
@@ -237,11 +252,9 @@ function StatTile({ label, value, accent }: { label: string; value: number; acce
 
 function NextCard({
   prospect,
-  projectName,
   onOpen,
 }: {
   prospect: import("../core/types").Prospect;
-  projectName: string;
   onOpen: () => void;
 }) {
   const evidenceCount = prospect.signals.reduce((n, s) => n + s.evidence.length, 0);
@@ -260,7 +273,6 @@ function NextCard({
             <span className="text-[14.5px] font-semibold text-fog-100">@{prospect.login}</span>
             {prospect.name && <span className="text-[12px] text-fog-400">{prospect.name}</span>}
           </div>
-          <div className="mt-0.5 truncate text-[11.5px] text-fog-500">{projectName}</div>
         </div>
       </header>
 
@@ -272,13 +284,13 @@ function NextCard({
         <span>{recency}</span>
       </div>
 
-      <p className="mt-3 line-clamp-3 text-[12.5px] leading-relaxed text-fog-300">
+      <p className="mt-3 line-clamp-2 text-[12.5px] leading-relaxed text-fog-300">
         {prospect.explanation}
       </p>
 
       <div className="mt-auto pt-4">
         <Button size="sm" variant="outline" onClick={onOpen} className="w-full">
-          View prospect <IArrowR size={12} />
+          Review prospect <IArrowR size={12} />
         </Button>
       </div>
     </article>

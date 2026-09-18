@@ -56,7 +56,7 @@ export default function Prospects() {
         <EmptyState
           icon={<IInbox size={20} />}
           title="No prospects yet"
-          body="Run discovery on a project to find people with public evidence connected to the problem it solves."
+          body="Run discovery on a project to find people with relevant public evidence. UserScout never invents leads — every prospect links back to source activity."
           action={<Button onClick={() => nav("/app/projects")}><IRadar size={14} /> Discover people</Button>}
         />
       ) : list.length === 0 ? (

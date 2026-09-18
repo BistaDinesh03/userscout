@@ -1,25 +1,54 @@
-﻿# UserScout
+<p align="center">
+  <img src="docs/userscout-logo.svg" alt="UserScout radar logo" width="72" />
+</p>
 
-> **Find people who actually need what you built.**
+<h1 align="center">UserScout</h1>
 
-UserScout is an open-source user-discovery platform for developers who ship open-source projects but struggle to find real users and meaningful feedback.
+<p align="center"><strong>Find people who actually need what you built.</strong></p>
 
-Point it at a public GitHub repository and it will:
+<p align="center">
+  Open-source user discovery for developers. Point UserScout at a public GitHub repository and it finds people with public evidence connected to the problem your project solves — then helps you reach out personally.
+</p>
 
-1. **Analyze** the project via the official GitHub API (metadata, topics, README, languages).
-2. **Derive** the likely problem space, target audience, and search vocabulary — deterministically.
-3. **Discover** people with *public evidence* connected to the problem the project solves (open issues asking about the problem, related repos they maintain, related projects they contribute to).
-4. **Score** each prospect 0–100 with a transparent, deterministic, testable model.
-5. **Explain** every score: signal breakdown + links to the exact public activity behind it.
-6. **Enrich** prospects with legitimate public contact paths (GitHub, personal website, LinkedIn, X) with source attribution.
-7. **Track** the human part: save → personally contact → reply → trial → feedback → user, with private notes, a manual outreach workspace, and a conversion funnel computed from your own records only.
-
-**Philosophy: Quality > Quantity.**  
-UserScout refuses to be a spam platform. See [Hard limits](#hard-limits).
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-f2a93b?style=flat-square" alt="MIT License" />
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square" alt="TypeScript strict" />
+  <img src="https://img.shields.io/badge/React-18-61dafb?style=flat-square" alt="React 18" />
+  <img src="https://img.shields.io/badge/FastAPI-Python-009688?style=flat-square" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/database-SQLite-003b57?style=flat-square" alt="SQLite" />
+</p>
 
 ---
 
-## Quick Start
+## What it does
+
+UserScout answers the hardest question after you ship something: **who actually needs this?**
+
+It walks through one loop:
+
+1. **Analyze** your public GitHub repository — metadata, topics, README, languages.
+2. **Derive** the likely problem space, target audience, and search vocabulary — deterministically, no AI.
+3. **Discover** people with public evidence connected to the problem you solve — issues they opened, related repos they maintain, projects they contribute to.
+4. **Score** each prospect 0–100 with a transparent, testable model you can inspect.
+5. **Explain** every score: signal breakdown plus links to the exact public activity behind it.
+6. **Enrich** prospects with legitimate public contact paths — GitHub, personal site, LinkedIn, X — each with its source.
+7. **Track** the human part: save → personally contact → reply → trial → feedback → user. Notes, drafts, and conversion data stay on your machine.
+
+**Quality over quantity.** UserScout refuses to be a spam platform. See [Hard limits](#hard-limits).
+
+---
+
+## Screenshots
+
+| Discovery | Prospect detail |
+| :---: | :---: |
+| ![Discovery](screenshots/screenshot-discovery.png) | ![Prospect detail](screenshots/screenshot-prospect.png) |
+
+![Landing page](screenshots/screenshot-landing.png)
+
+---
+
+## Quick start
 
 ### Backend (FastAPI + SQLite)
 
@@ -57,7 +86,7 @@ Open [http://localhost:3000](http://localhost:3000), create a workspace account,
 
 ## Architecture
 
-### Frontend (React 18 + TypeScript + Vite + Tailwind)
+### Frontend — React 18 + TypeScript + Vite + Tailwind
 
 ```text
 src/
@@ -68,15 +97,17 @@ src/
 │   ├── github.ts            # GitHub API client, URL validation, rate limits
 │   ├── analysis.ts          # Repo → ProjectProfile (keywords / audience / query terms)
 │   ├── discovery.ts         # Evidence-gathering engine (issues / repos / contributors)
-│   ├── scoring.ts           # Deterministic, documented scoring model
+│   ├── scoring.ts           # Deterministic scoring + dimensions
+│   ├── evidence.ts          # Evidence classification, dedup, tech-collapse
+│   ├── recency.ts           # Centralized recency buckets
 │   └── services.ts          # Funnel math + shared types
 ├── state/store.tsx          # Reactive workspace state over the API
-├── components/              # Icons (hand-drawn SVG), UI primitives, domain widgets
-└── pages/                   # Landing, Auth, Dashboard, ProjectNew, ProjectDetail,
-                             # Discovery, ProspectDetail, Outreach, Community
+├── components/              # Icons, UI primitives, domain widgets, AppShell
+└── pages/                   # Landing, Auth, Home, Dashboard, ProjectNew, ProjectDetail,
+                             # Discovery, ProspectDetail, Prospects, Outreach, Community
 ```
 
-### Backend (FastAPI + SQLAlchemy + SQLite)
+### Backend — FastAPI + SQLAlchemy + SQLite
 
 ```text
 backend/
@@ -85,137 +116,111 @@ backend/
 │   ├── models.py            # SQLAlchemy models (User, Project, Prospect,
 │   │                        # ContactChannel, OutreachEvent, OutreachMessage,
 │   │                        # Feedback, EmailIntegration, Session)
-│   ├── schemas.py           # Pydantic request/response schemas
+│   ├── schemas.py           # Pydantic request / response schemas
 │   ├── database.py          # Engine + session factory
 │   ├── config.py            # Environment-driven settings
 │   ├── auth_utils.py        # Argon2 hashing + session tokens
+│   ├── migrations_util.py   # Idempotent startup migrations
 │   ├── ssrf.py              # SSRF guard for outbound HTTP
 │   └── enrichment.py        # Public contact discovery service
 ├── tests/                   # pytest suite
 └── data/userscout.db        # Persistent SQLite (gitignored)
 ```
 
-### Layering Rules
+### Layering rules
 
 - Business logic lives in `core/` — never in route handlers or components.
-- The browser is not the source of truth. All persistence goes through the FastAPI backend.
+- The browser is **not** the source of truth. All persistence goes through the FastAPI backend.
 - Every endpoint verifies ownership server-side; IDOR is prevented by scoping all queries to `owner_id`.
 - External integrations sit behind interfaces (`GitHubClient`, `StorageAdapter`) so the transport is replaceable.
 
-**Data flow:**  
-GitHub API → analysis → discovery candidates → `scoreCandidate` → backend persistence → outreach events / feedback → funnel
+**Data flow:** GitHub API → analysis → discovery candidates → scoring + evidence classification → backend persistence → outreach events / feedback → funnel
 
 ---
 
-## Scoring Model (Deterministic & Documented)
+## Evidence intelligence
 
-| Signal              | Max | Rule |
-|---------------------|-----|------|
-| Problem evidence    | 30  | Publicly asked for / discussed the exact problem (issue title/body). Question-shaped: 30 · discussion: 20 |
-| Related project     | 25  | Maintains a repo matching the project's query terms. 15 base + 5 per matched term (max +10) |
-| Contributes to related repos | 15 | Recent commits in closely related repos. 12 base, +3 for 2+ repos |
-| Technology match    | 20  | Language match +8 · topic/keyword overlap +4 each (max +12). Weak |
-| Recent activity     | 15  | ≤30d: 15 · ≤90d: 10 · ≤180d: 6 · ≤1y: 3. Weak |
-| Audience alignment  | 8   | Bio/topics align with derived audience. Weak |
+Every prospect carries five separate dimensions — not a single blended score:
 
-Signals sum, capped at 100.
+| Dimension | Meaning |
+| --- | --- |
+| **Relevance** | How closely the person matches the project's problem. 0–100. |
+| **Evidence strength** | Very strong · Strong · Medium · Weak. Derived from the actual evidence, not the score. |
+| **Recency** | Very recent (≤14d) · Recent (≤30d) · Aging (≤90d) · Old. Computed from real activity. |
+| **Contactability** | How many legitimate public contact paths exist. |
+| **Confidence** | Evidence-driven. High confidence *requires* strong evidence — a high score alone is never enough. |
 
-**Confidence**
+**Determinism is a feature.** Same input → same output. No randomness, no black box. Weak signals (technology overlap, framework match) can never by themselves produce a high-confidence prospect.
 
-- **HIGH** = score ≥ 70 and a strong signal ≥ 20 pts  
-- **MEDIUM** = score ≥ 45 or any strong signal  
-- **LOW** = otherwise  
-
-Weak signals alone can never exceed 43/100. “Uses Python” is context, not intent — a weak-only candidate is always a LOW-confidence cold lead.
-
-Same evidence in → same score out. No randomness, no black box.
+**Deduplication.** The same underlying signal — a Python repo, a Python topic, a Python contribution — collapses into one line. Duplicate evidence never inflates a score.
 
 ---
 
-## Public Contact Enrichment
+## Security & privacy
 
-UserScout helps you find legitimate public contact paths without becoming a data broker.
-
-**Sources (in order)**
-
-1. GitHub profile (`blog`, `twitter_username`, and `/users/{name}/social_accounts`)
-2. The one personal website linked from GitHub
-3. On that website only: one `/contact` or `/about` page with `mailto:` and `linkedin.com/in/` links
-
-**Strict rules**
-
-- **No email guessing.** Only `mailto:` links literally present on the page.
-- **SSRF-protected.** Every outbound URL is validated to resolve to a public IP. Localhost, private ranges, and cloud metadata endpoints are blocked.
-- **Bounded.** Max ~4 HTTP requests per prospect, 5 s timeout each, 100 KB response cap, respects `robots.txt`.
-- **Provenance.** Every channel stores its source URL and source type (“Linked from GitHub”, “Found on public website”).
-- Never marked “verified” unless there is a meaningful verification basis.
+- **Official GitHub API only** over HTTPS against a fixed host (`api.github.com`).
+- **SSRF-protected.** Every outbound URL — including personal sites found via enrichment — is validated to resolve to a public IP. Localhost, private ranges, and cloud metadata endpoints are blocked. GitHub is treated as a trusted host even on networks where a local DNS resolver misclassifies it.
+- **No browser GitHub secrets.** Unauthenticated public API requests only. Authenticated production use requires a server-side proxy — never put a token in a `VITE_*` variable.
+- **Passwords.** Argon2id hashing. Never plaintext, never returned by the API.
+- **Sessions.** HttpOnly, SameSite=Lax cookies with a 30-day TTL. Cleared on logout.
+- **Ownership.** Every service call verifies `resource.owner_id == actor.id`. Private notes, drafts, outreach history, and feedback are never exposed publicly.
+- **Input validation** on usernames, passwords, notes (2k), drafts (5k), ratings (1–5), and repository URLs.
+- **Rate limits respected.** Discovery paces requests and shows the remaining GitHub budget live.
 
 ---
 
-## GitHub Integration & Security
+## Hard limits
 
-- Official API only, over HTTPS, fixed host `api.github.com`.
-- SSRF-safe by construction: repo input is validated against `github.com` with a strict allow-list regex (`parseRepoInput`); only the extracted `owner/repo` is interpolated into request paths. Ports, credentials in URLs, and non-GitHub hosts are rejected.
-- No browser GitHub secrets. Unauthenticated public API requests only. Authenticated production use requires a server-side proxy — never put a GitHub token in a `VITE_*` variable.
-- Failures handled gracefully: timeouts (9 s `AbortController`), 404 (nonexistent/private repo), 403/429 rate limits with reset times surfaced in the UI, malformed JSON, network errors.
-- Rate limiting respected on the client side: discovery paces requests (~700 ms apart) and uses ≤ ~15 calls per run.
-- **Passwords:** Argon2id hashing (passlib). Never plaintext, never returned by the API.
-- **Sessions:** HttpOnly, SameSite=Lax cookies with 30-day TTL. Cleared on logout.
-- **Authorization:** every service call verifies `resource.owner_id == actor.id`. Private notes, drafts, outreach history, and feedback are never exposed publicly.
-- Input validation on usernames, passwords, notes (2k), drafts (5k), ratings (1–5).
+UserScout will **not**:
 
----
+- Send mass emails or bulk messages
+- Run automated outreach campaigns or sequences
+- Scrape private information or bypass auth / API restrictions
+- Guess email addresses or construct possible addresses
+- Collect unnecessary personal data
+- Sell or share personal information
+- Invent statistics — every funnel metric comes from your own rows, or is not shown
 
-## Hard Limits — What UserScout Will **Not** Do
-
-- ❌ Automatic mass emails or bulk messaging  
-- ❌ Automated outreach campaigns / sequences  
-- ❌ Scraping private information or bypassing auth / API restrictions  
-- ❌ Guessing emails or constructing possible addresses  
-- ❌ Collecting unnecessary personal data  
-- ❌ Selling or sharing personal information  
-- ❌ Inventing statistics — funnel metrics are computed from your own rows, or not shown  
-
-The human developer writes every message and presses send themselves. UserScout provides context for personalized outreach, nothing more.
+The human developer writes every message and presses send themselves. UserScout provides *context for personalized outreach*, nothing more.
 
 ---
 
-## Environment Variables
+## Environment variables
 
-### Backend
+**Backend** — see `backend/.env.example`:
 
-See `backend/.env.example`:
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | `sqlite:///./data/userscout.db` | SQLAlchemy connection string |
+| `SECRET_KEY` | `dev-secret-key-change-in-prod` | Session signing key |
+| `ENVIRONMENT` | `development` | `production` enables secure cookies |
+| `CORS_ORIGINS` | `http://localhost:3000` | Allowed frontend origins |
 
-| Variable       | Default                              | Purpose                          |
-|----------------|--------------------------------------|----------------------------------|
-| `DATABASE_URL` | `sqlite:///./data/userscout.db`      | SQLAlchemy connection string     |
-| `SECRET_KEY`   | `dev-secret-key-change-in-prod`      | Session signing key              |
-| `ENVIRONMENT`  | `development`                        | `production` enables secure cookies |
-| `CORS_ORIGINS` | `http://localhost:3000`              | Allowed frontend origins         |
-
-### Frontend
-
-`VITE_API_URL` (defaults to `http://localhost:8000`).
+**Frontend** — `VITE_API_URL` (defaults to `http://localhost:8000`).
 
 ---
 
-## Known Limitations (Honest List)
+## Known limitations
 
-- **SQLite is single-machine.** Persistent on the machine running the backend, but not distributed. Use PostgreSQL for multi-instance deployments.
-- **No OAuth yet.** Local Argon2-hashed accounts demonstrate the ownership model, but production should use server-side OAuth (e.g., GitHub).
-- **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy discovery use. Add a server-side GitHub proxy for authenticated requests.
-- **Discovery quality follows repo quality.** Repos with no description/topics yield weak query terms and weaker prospects — by design.
-- **Contact enrichment is intentionally narrow.** Only GitHub profile + one linked website. No recursive crawling, no private data, no email guessing.
+1. **SQLite is single-machine.** Persistent on the machine running the backend, but not distributed. Use PostgreSQL for multi-instance deployments.
+2. **No OAuth yet.** Local Argon2-hashed accounts demonstrate the ownership model; production should use server-side OAuth (e.g., GitHub).
+3. **Unauthenticated GitHub limits** (60 core/h, 10 search/min) throttle heavy discovery. Add a server-side GitHub proxy for authenticated requests.
+4. **Discovery quality follows repo quality.** Repos with no description or topics yield weak query terms and weaker prospects — by design. The engine refuses to guess.
+5. **Contact enrichment is intentionally narrow.** Only the GitHub profile plus one linked website. No recursive crawling, no private data, no email guessing.
 
 ---
 
-## Production Deployment
+## Production deployment
 
 - `npm run build` produces a static bundle (`dist/`) deployable to any static host (Netlify, Vercel, GitHub Pages, S3). Use hash routing (already configured) or configure SPA rewrites.
 - For multi-device / multi-user production use, swap SQLite for PostgreSQL behind a server-backed `StorageAdapter` with row-level ownership. The service layer is already organized around ownership-guarded operations.
 - Add real OAuth (e.g., GitHub OAuth) server-side before storing sensitive or multi-device data.
 
 ---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Contributions should preserve evidence-based discovery, transparent scoring, and human-controlled outreach.
 
 ## License
 
