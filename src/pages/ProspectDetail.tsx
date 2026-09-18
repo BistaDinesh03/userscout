@@ -8,9 +8,9 @@ import { STATUSES, statusLabel } from "../core/types";
 import { useEffect, useState as useStateExtra } from "react";
 import { useWorkspace } from "../state/store";
 import { PageHead } from "../components/layout";
-import { Avatar, CopyButton, EvidenceRow, ScoreDial, SignalBreakdown } from "../components/bits";
+import { Avatar, CopyButton, EvidenceRow, SignalBreakdown } from "../components/bits";
 import { IAlert, IArrowL, ICheck, IClock, IExt, IFlag, IInbox, INote, ISend, IStar, ITerminal, IUsers } from "../components/icons";
-import { Badge, Button, ConfidenceBadge, EmptyState, Field, Modal, Select, StatusPill, Textarea } from "../components/ui";
+import { Badge, Button, EmptyState, Field, Modal, Select, StatusPill, Textarea } from "../components/ui";
 import { ContactChannelsPanel } from "../components/ContactChannelsPanel";
 import { cx, formatDate, formatClock, timeAgo } from "../core/utils";
 
@@ -100,7 +100,6 @@ export default function ProspectDetail() {
               <a href={prospect.htmlUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 font-display text-[18px] font-bold text-fog-100 hover:text-signal-300">
                 {prospect.login} <IExt size={13} className="text-fog-500" />
               </a>
-              <ConfidenceBadge c={prospect.confidence} />
             </div>
             <div className="mt-1 font-mono text-[10.5px] text-fog-500">
               first seen {timeAgo(prospect.firstSeenAt)} · sources: {prospect.sources.join(", ")}
@@ -108,7 +107,6 @@ export default function ProspectDetail() {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-5">
-          <ScoreDial score={prospect.score} size={72} sub={prospect.confidence} />
           <div className="flex flex-col items-end gap-2">
             <StatusPill status={prospect.status} />
             <Select value={prospect.status} onChange={(e) => { setStatus(prospect.id, e.target.value as ProspectStatus); toast("ok", `Status → ${statusLabel(e.target.value as ProspectStatus)}`); }} aria-label="Change prospect status" className="h-8 w-44 text-[12.5px]">
@@ -145,14 +143,37 @@ export default function ProspectDetail() {
               <h2 className="font-display text-[15px] font-bold">Why this person?</h2>
               <span className="font-mono text-[9.5px] uppercase tracking-wider text-fog-500">deterministic breakdown</span>
             </div>
-            <p className="mb-4 rounded-md border border-pine-700 bg-pine-950/50 px-3.5 py-3 text-[13px] leading-relaxed text-fog-200">{prospect.explanation}</p>
+            <p className="mb-4 rounded-md border border-pine-700 bg-pine-950/50 px-3.5 py-3 text-[13px] leading-relaxed text-fog-200">
+              {prospect.whyThisPerson || prospect.explanation || "No public evidence found."}
+            </p>
             <SignalBreakdown signals={prospect.signals} />
           </section>
 
           <section className="rounded-lg border border-pine-700/80 bg-pine-900/60 p-5">
             <h2 className="mb-3 font-display text-[15px] font-bold">Evidence ({prospect.signals.reduce((n, s) => n + s.evidence.length, 0)})</h2>
             <ul className="space-y-2">
-              {prospect.signals.flatMap((s) => s.evidence).map((e, i) => <EvidenceRow key={i} e={e} />)}
+              {prospect.signals
+                .flatMap((s) => s.evidence.map((e) => ({ ...e, signalLabel: s.label })))
+                .sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
+                .slice(0, 8)
+                .map((e, i) => (
+                  <li key={i} className="rounded-md border border-pine-700/70 bg-pine-950/40 px-3.5 py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-fog-500">
+                        {e.kind} · {e.signalLabel}
+                      </span>
+                      <span className="shrink-0 font-mono text-[10px] text-fog-500">
+                        {e.at ? new Date(e.at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "no date"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-fog-200">{e.text}</p>
+                    {e.url && (
+                      <a href={e.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-tide-400 hover:underline">
+                        Open source <IExt size={11} />
+                      </a>
+                    )}
+                  </li>
+                ))}
             </ul>
             <p className="mt-3 font-mono text-[10px] leading-relaxed text-fog-500">Every item links to public GitHub activity. Verify before you write — personalization beats volume.</p>
           </section>

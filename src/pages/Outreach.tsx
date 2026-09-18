@@ -218,10 +218,6 @@ export default function Outreach() {
           <li className="flex gap-2"><span className="text-fog-500">—</span> "Not interested" means don't contact them again.</li>
         </ul>
       </section>
-
-      <p className="mt-8 text-center font-mono text-[10.5px] text-fog-600">
-        MIT licensed · local-first build · your outreach history never leaves this device
-      </p>
     </>
   );
 }

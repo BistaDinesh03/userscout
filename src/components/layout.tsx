@@ -5,7 +5,7 @@ import { Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useWorkspace } from "../state/store";
 import { cx, timeAgo } from "../core/utils";
 import { RateChip } from "./bits";
-import { ICompass, IInbox, ILayers, ILogout, IRadar } from "./icons";
+import { ICompass, IHome, IInbox, ILayers, ILogout, IRadar, IUsers } from "./icons";
 
 export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const s = size === "lg" ? 30 : size === "sm" ? 18 : 22;
@@ -33,7 +33,9 @@ export function Backdrop() {
 }
 
 const NAV = [
+  { to: "/app", label: "Home", icon: IHome, end: true },
   { to: "/app/projects", label: "Projects", icon: ILayers, end: false },
+  { to: "/app/prospects", label: "Prospects", icon: IUsers, end: false },
   { to: "/app/outreach", label: "Outreach", icon: IInbox, end: false },
   { to: "/app/community", label: "Community", icon: ICompass, end: false },
 ];
@@ -57,10 +59,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink
               key={n.to}
               to={n.to}
+              end={n.end}
               className={({ isActive }) =>
                 cx(
                   "group flex items-center gap-2.5 rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors",
-                  isActive || (n.to === "/app/projects" && loc.pathname.startsWith("/app/prospects"))
+                  isActive
                     ? "bg-pine-750 text-signal-300 shadow-[inset_2px_0_0_0_var(--color-signal-500)]"
                     : "text-fog-400 hover:bg-pine-800 hover:text-fog-100",
                 )

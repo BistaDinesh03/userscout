@@ -83,7 +83,7 @@ function TopNav({ signedIn }: { signedIn: boolean }) {
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline-flex"><DownloadButton /></span>
           {signedIn ? (
-            <Link to="/app/projects"><Button size="sm">Open workspace <IArrowR size={13} /></Button></Link>
+            <Link to="/app"><Button size="sm">Open workspace <IArrowR size={13} /></Button></Link>
           ) : (
             <>
               <Link to="/auth" className="rounded-md px-3 py-1.5 text-[13px] font-medium text-fog-300 hover:text-fog-100">Sign in</Link>

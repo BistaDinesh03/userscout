@@ -270,3 +270,10 @@ export const IZip = make(
     <path d="M9.5 9.5h1.5M9.5 12.5h1.5M9.5 15.5h1.5" />
   </>,
 );
+
+export const IHome = make(
+  <>
+    <path d="M4 10.5 12 4l8 6.5" />
+    <path d="M6 10v9.5a1 1 0 0 0 1 1h3.5v-5.5h3V20.5H17a1 1 0 0 0 1-1V10" />
+  </>,
+);

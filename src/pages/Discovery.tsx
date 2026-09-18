@@ -107,49 +107,8 @@ export default function Discovery() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        {/* left: plan + console */}
-        <div className="space-y-4">
-          <section className="brackets rounded-lg border border-pine-600 bg-pine-900/80 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-[14px] font-bold">Search plan</h2>
-              <span className="font-mono text-[10px] text-fog-500">{plan.length} steps</span>
-            </div>
-            <ol className="space-y-2.5">
-              {plan.map((s, i) => (
-                <li key={s.id} className="flex gap-3">
-                  <span className={cx("mt-0.5 flex size-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold",
-                    lines.some((l) => l.stepId === s.id && l.status === "ok") ? "bg-leaf-500/20 text-leaf-300"
-                      : lines.some((l) => l.stepId === s.id && l.status === "run") ? "bg-signal-500/20 text-signal-300"
-                      : lines.some((l) => l.stepId === s.id && l.status === "err") ? "bg-ember-500/20 text-ember-400"
-                      : "bg-pine-700 text-fog-400")}>
-                    {i + 1}
-                  </span>
-                  <div>
-                    <div className="text-[12.5px] font-semibold text-fog-200">{s.label}</div>
-                    <div className="text-[11.5px] leading-relaxed text-fog-500">{s.detail}</div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <Button onClick={run} loading={running} className="mt-4 w-full">
-              <IRadar size={14} /> {results ? "Run again" : "Start scouting"}
-            </Button>
-            <p className="mt-2.5 text-center font-mono text-[9.5px] leading-relaxed text-fog-500">
-              paced for GitHub rate limits · ~15 public API calls
-            </p>
-          </section>
-
-          <ConsoleLog lines={lines} className="max-h-[300px]" />
-
-          {fatal && (
-            <div role="alert" className="flex items-start gap-2.5 rounded-md border border-ember-500/35 bg-ember-500/10 px-3 py-2.5 text-[12.5px] text-ember-400">
-              <IAlert size={15} className="mt-px shrink-0" /> {fatal}
-            </div>
-          )}
-        </div>
-
-        {/* right: results */}
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+        {/* results */}
         <div>
           {!results && !running && (
             <EmptyState icon={<ISearch size={20} />} title="No results yet" body="Run the search plan. Candidates appear ranked by a deterministic score, each backed by public evidence you can verify yourself." />
@@ -241,7 +200,48 @@ export default function Discovery() {
             </>
           )}
         </div>
-      </div>
+{/* plan + console */}
+        <div className="space-y-4">
+          <section className="brackets rounded-lg border border-pine-600 bg-pine-900/80 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-[14px] font-bold">Search plan</h2>
+              <span className="font-mono text-[10px] text-fog-500">{plan.length} steps</span>
+            </div>
+            <ol className="space-y-2.5">
+              {plan.map((s, i) => (
+                <li key={s.id} className="flex gap-3">
+                  <span className={cx("mt-0.5 flex size-5 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold",
+                    lines.some((l) => l.stepId === s.id && l.status === "ok") ? "bg-leaf-500/20 text-leaf-300"
+                      : lines.some((l) => l.stepId === s.id && l.status === "run") ? "bg-signal-500/20 text-signal-300"
+                      : lines.some((l) => l.stepId === s.id && l.status === "err") ? "bg-ember-500/20 text-ember-400"
+                      : "bg-pine-700 text-fog-400")}>
+                    {i + 1}
+                  </span>
+                  <div>
+                    <div className="text-[12.5px] font-semibold text-fog-200">{s.label}</div>
+                    <div className="text-[11.5px] leading-relaxed text-fog-500">{s.detail}</div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Button onClick={run} loading={running} className="mt-4 w-full">
+              <IRadar size={14} /> {results ? "Run again" : "Start scouting"}
+            </Button>
+            <p className="mt-2.5 text-center font-mono text-[9.5px] leading-relaxed text-fog-500">
+              paced for GitHub rate limits · ~15 public API calls
+            </p>
+          </section>
+
+          <ConsoleLog lines={lines} className="max-h-[180px]" />
+
+          {fatal && (
+            <div role="alert" className="flex items-start gap-2.5 rounded-md border border-ember-500/35 bg-ember-500/10 px-3 py-2.5 text-[12.5px] text-ember-400">
+              <IAlert size={15} className="mt-px shrink-0" /> {fatal}
+            </div>
+          )}
+        </div>
+
+              </div>
 
       <Modal open={showModel} onClose={() => setShowModel(false)} title="Scoring model (deterministic)" wide>
         <div className="space-y-2">

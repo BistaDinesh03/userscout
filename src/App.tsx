@@ -15,6 +15,8 @@ import Discovery from "./pages/Discovery";
 import ProspectDetail from "./pages/ProspectDetail";
 import Outreach from "./pages/Outreach";
 import Community from "./pages/Community";
+import Home from "./pages/Home";
+import Prospects from "./pages/Prospects";
 import { Button } from "./components/ui";
 
 function ScrollToTop() {
@@ -60,12 +62,13 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/app" element={<RequireAuth><AppShell><Dashboard /></AppShell></RequireAuth>} />
+          <Route path="/app" element={<RequireAuth><AppShell><Home /></AppShell></RequireAuth>} />
           <Route path="/app/projects" element={<RequireAuth><AppShell><Dashboard /></AppShell></RequireAuth>} />
           <Route path="/app/projects/new" element={<RequireAuth><AppShell><ProjectNew /></AppShell></RequireAuth>} />
           <Route path="/app/projects/:id" element={<RequireAuth><AppShell><ProjectDetail /></AppShell></RequireAuth>} />
           <Route path="/app/projects/:id/discovery" element={<RequireAuth><AppShell><Discovery /></AppShell></RequireAuth>} />
           <Route path="/app/prospects/:pid" element={<RequireAuth><AppShell><ProspectDetail /></AppShell></RequireAuth>} />
+          <Route path="/app/prospects" element={<RequireAuth><AppShell><Prospects /></AppShell></RequireAuth>} />
           <Route path="/app/outreach" element={<RequireAuth><AppShell><Outreach /></AppShell></RequireAuth>} />
           <Route path="/app/community" element={<RequireAuth><AppShell><Community /></AppShell></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
